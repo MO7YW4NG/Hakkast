@@ -1,0 +1,119 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  /* Enhanced button styles */
+  .btn {
+    @apply px-6 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-opacity-50;
+  }
+  
+  .btn-primary {
+    @apply bg-hakkast-gradient text-white hover:shadow-xl focus:ring-primary-500 relative overflow-hidden;
+  }
+  
+  .btn-primary::before {
+    content: '';
+    @apply absolute inset-0 bg-white opacity-0 transition-opacity duration-300;
+  }
+  
+  .btn-primary:hover::before {
+    @apply opacity-10;
+  }
+  
+  .btn-secondary {
+    @apply bg-white text-hakkast-navy border-2 border-hakkast-navy hover:bg-hakkast-navy hover:text-white focus:ring-hakkast-navy shadow-lg;
+  }
+  
+  .btn-gold {
+    @apply bg-hakkast-gold-gradient text-hakkast-navy hover:shadow-xl focus:ring-accent-500;
+  }
+  
+  .btn-ghost {
+    @apply bg-transparent text-hakkast-navy border border-hakkast-navy hover:bg-hakkast-navy hover:text-white;
+  }
+  
+  /* Card styles */
+  .card {
+    @apply bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1;
+  }
+  
+  .card-gradient {
+    @apply bg-hakkast-gradient text-white rounded-2xl shadow-xl;
+  }
+  
+  /* Input styles */
+  .input {
+    @apply w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-hakkast-purple focus:ring-4 focus:ring-hakkast-purple focus:ring-opacity-20 transition-all duration-200;
+  }
+  
+  .input-large {
+    @apply px-6 py-4 text-lg;
+  }
+  
+  /* Text styles */
+  .text-gradient {
+    @apply bg-hakkast-gradient bg-clip-text text-transparent;
+  }
+  
+  .text-gold-gradient {
+    @apply bg-hakkast-gold-gradient bg-clip-text text-transparent;
+  }
+  
+  /* Hero section */
+  .hero-pattern {
+    background-image: 
+      radial-gradient(circle at 20% 80%, rgba(72, 58, 160, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(121, 101, 193, 0.1) 0%, transparent 50%),
+      radial-gradient(circle at 40% 40%, rgba(227, 208, 149, 0.1) 0%, transparent 50%);
+  }
+  
+  /* Glassmorphism effect */
+  .glass {
+    @apply bg-white bg-opacity-20 backdrop-blur-lg border border-white border-opacity-20;
+  }
+  
+  /* Loading animations */
+  .loading-dots::after {
+    content: '';
+    animation: dots 1.5s steps(5, end) infinite;
+  }
+  
+  @keyframes dots {
+    0%, 20% {
+      color: rgba(0,0,0,0);
+      text-shadow:
+        .25em 0 0 rgba(0,0,0,0),
+        .5em 0 0 rgba(0,0,0,0);
+    }
+    40% {
+      color: black;
+      text-shadow:
+        .25em 0 0 rgba(0,0,0,0),
+        .5em 0 0 rgba(0,0,0,0);
+    }
+    60% {
+      text-shadow:
+        .25em 0 0 black,
+        .5em 0 0 rgba(0,0,0,0);
+    }
+    80%, 100% {
+      text-shadow:
+        .25em 0 0 black,
+        .5em 0 0 black;
+    }
+  }
+}
