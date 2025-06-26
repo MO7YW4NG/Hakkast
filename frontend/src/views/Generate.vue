@@ -181,14 +181,14 @@
                   <span class="text-2xl">🎙️</span>
                 </div>
                 <div>
-                  <h3 class="text-xl font-semibold">{{ generatedPodcast.title }}</h3>
-                  <p class="text-white/80">AI播客 • {{ generatedPodcast.duration || form.duration }}分鐘</p>
+                  <h3 class="text-xl font-semibold">{{ generatedPodcast?.title }}</h3>
+                  <p class="text-white/80">AI播客 • {{ generatedPodcast?.duration || form.duration }}分鐘</p>
                 </div>
               </div>
               
-              <div v-if="generatedPodcast.audioUrl" class="mb-4">
+              <div v-if="generatedPodcast?.audioUrl" class="mb-4">
                 <audio controls class="w-full">
-                  <source :src="generatedPodcast.audioUrl" type="audio/wav">
+                  <source :src="generatedPodcast?.audioUrl" type="audio/wav">
                   您的瀏覽器不支援音頻播放。
                 </audio>
               </div>
@@ -228,13 +228,13 @@
               
               <div class="p-6">
                 <div v-if="activeTab === 'hakka'" class="prose max-w-none">
-                  <div class="whitespace-pre-wrap text-gray-700 leading-relaxed">{{ generatedPodcast.hakkaContent }}</div>
+                  <div class="whitespace-pre-wrap text-gray-700 leading-relaxed">{{ generatedPodcast?.hakkaContent }}</div>
                 </div>
                 <div v-if="activeTab === 'chinese'" class="prose max-w-none">
-                  <div class="whitespace-pre-wrap text-gray-700 leading-relaxed">{{ generatedPodcast.chineseContent }}</div>
+                  <div class="whitespace-pre-wrap text-gray-700 leading-relaxed">{{ generatedPodcast?.chineseContent }}</div>
                 </div>
-                <div v-if="activeTab === 'romanization' && generatedPodcast.romanization" class="prose max-w-none">
-                  <div class="whitespace-pre-wrap text-gray-700 font-mono leading-relaxed">{{ generatedPodcast.romanization }}</div>
+                <div v-if="activeTab === 'romanization' && generatedPodcast?.romanization" class="prose max-w-none">
+                  <div class="whitespace-pre-wrap text-gray-700 font-mono leading-relaxed">{{ generatedPodcast?.romanization }}</div>
                 </div>
               </div>
             </div>
@@ -249,11 +249,12 @@
 import { ref, reactive } from 'vue'
 import { usePodcastStore } from '../stores/podcast'
 import CrawlerStatus from '../components/CrawlerStatus.vue'
+import type { Podcast, PodcastGenerationRequest } from '../types/podcast'
 
 const podcastStore = usePodcastStore()
 
 const isGenerating = ref(false)
-const generatedPodcast = ref(null)
+const generatedPodcast = ref<Podcast | null>(null)
 const activeTab = ref('hakka')
 
 const form = reactive({
@@ -341,7 +342,7 @@ const generatePodcast = async () => {
     
     processSteps.value[3].completed = true // TTS synthesis
     
-    const result = await podcastStore.generatePodcast(form)
+    const result = await podcastStore.generatePodcast(form as PodcastGenerationRequest)
     generatedPodcast.value = result
   } catch (error) {
     console.error('Failed to generate podcast:', error)
