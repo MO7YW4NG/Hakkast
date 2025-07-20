@@ -1,10 +1,21 @@
 import os
 from typing import List
+from pathlib import Path
 from pydantic import BaseModel
+from dotenv import load_dotenv
+
+# 載入 .env 文件
+env_path = Path(__file__).parent.parent.parent / ".env"
+load_dotenv(env_path)
 
 class Settings(BaseModel):
     # Gemini AI Configuration
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    
+    # TWCC AFS Configuration
+    TWCC_API_KEY: str = os.getenv("TWCC_API_KEY", "")
+    TWCC_BASE_URL: str = os.getenv("TWCC_BASE_URL", "https://api-ams.twcc.ai/api/models")
+    TWCC_MODEL_NAME: str = os.getenv("TWCC_MODEL_NAME", "llama3.3-ffm-70b-32k-chat")
     
     # Hakka AI Hackathon API Configuration (shared credentials)
     HAKKA_USERNAME: str = os.getenv("HAKKA_USERNAME", os.getenv("CREDENTIAL_USERNAME", ""))
@@ -29,6 +40,6 @@ class Settings(BaseModel):
     SMTP_FROM_EMAIL: str = os.getenv("SMTP_FROM_EMAIL", "noreply@hakkast.com")
     
     class Config:
-        env_file = ".env"
+        env_file = Path(__file__).parent.parent.parent / ".env"
 
 settings = Settings()
