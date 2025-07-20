@@ -1,3 +1,4 @@
+#會被Github忽略的檔案
 __pycache__
 *.pyc
 *.pyo
