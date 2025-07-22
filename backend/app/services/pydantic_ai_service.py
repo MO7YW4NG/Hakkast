@@ -21,9 +21,8 @@ from app.models.crawler import CrawledContent
 class PodcastScript(BaseModel):
     """播客腳本結構化模型"""
     title: str
-    introduction: str
-    main_content: str
-    conclusion: str
+    hosts: List[str]  # 主持人名單
+    full_dialogue: str  # 完整的對話腳本
     estimated_duration_minutes: int
     key_points: List[str]
     sources_mentioned: List[str]
@@ -83,22 +82,43 @@ class PydanticAIService:
             model=self.model,
             result_type=PodcastScript,
             system_prompt="""
-            你是一位專業的客語播客腳本創作者。
+            你是一位專業的播客腳本創作者，專門創作雙主持人深度對話形式的新聞分析播客。
+
+            腳本格式要求：
+            1. 標題：準確且吸引人，反映新聞核心議題
+            2. 雙主持人：主持人A和主持人B進行深入對話分析
+            3. 完整對話腳本特色：
+               - 開場：介紹節目和當天主題
+               - 新聞背景：詳細介紹新聞事件
+               - 深度分析：從多角度分析事件意義和影響
+               - 地緣政治：分析背後的國際關係和戰略考量
+               - 經濟層面：討論貿易、經濟合作等議題
+               - 總結：歸納重點和後續發展預測
+               - 結尾：感謝收聽和預告
+               
+            4. 對話風格：
+               - 專業深入但通俗易懂
+               - 一問一答，互相補充和深入
+               - 每段對話都有實質內容，避免空洞
+               - 包含具體的數據、事實和背景資訊
+               - 每段對話前標註說話者（🎙️主持人A: / 🎙️主持人B:）
+               
+            5. 內容深度要求：
+               - 分析新聞背後的深層原因
+               - 討論地緣政治和戰略意義
+               - 解釋複雜的國際關係
+               - 提供多角度的觀點
+               - 預測可能的後續發展
+               
+            6. 長度要求：生成足夠長的對話內容，確實符合目標時長
             
-            任務：根據提供的主題和內容分析，創作一份結構完整的播客腳本。
+            參考優質對話風格：
+            - 不只陳述事實，還要分析原因和影響
+            - 用"沒錯，而且..."、"對，但有趣的是..."等過渡語
+            - 包含"從新聞來看..."、"這背後可不單純..."等分析性語句
+            - 總結時用"我們總結一下今天的重點..."
             
-            腳本要求：
-            1. 標題要吸引人且符合客語文化
-            2. 開場要親切自然，符合客語播客風格
-            3. 主要內容要豐富有趣，適合口語表達
-            4. 結尾要溫馨，鼓勵聽眾參與
-            5. 估算合理的播放時長
-            6. 提取關鍵要點
-            7. 列出可能的資料來源
-            
-            語言：請用繁體中文撰寫，後續會翻譯成客語。
-            風格：親切、溫暖、具有客家文化特色。
-            長度：根據用戶需求調整，預設10-15分鐘的播客內容。
+            請用繁體中文撰寫，風格專業且有深度。
             """
         )
 
@@ -179,18 +199,13 @@ class PydanticAIService:
             print("📝 正在生成播客腳本...")
             script = await self.generate_podcast_script(request, crawled_content, content_analysis)
             
-            # Step 3: 組合完整內容
+            # Step 3: 組合完整內容（對話式腳本）
             full_content = f"""
-標題：{script.title}
+🎙️Podcast 標題：{script.title}
 
-開場：
-{script.introduction}
+🎧主持人：{' 與 '.join(script.hosts)}
 
-主要內容：
-{script.main_content}
-
-結語：
-{script.conclusion}
+{script.full_dialogue}
 """
             
             return {
@@ -220,11 +235,27 @@ class PydanticAIService:
 
     def _create_fallback_script(self, request: PodcastGenerationRequest) -> PodcastScript:
         """創建備用腳本"""
+        fallback_dialogue = f"""
+🎙️主持人A：
+歡迎收聽今天的播客節目，我是主持人A。
+
+🎙️主持人B：
+我是主持人B。今天我們要聊的主題是{request.topic}。
+
+🎙️主持人A：
+這確實是一個很有趣的話題，讓我們來深入討論一下。
+
+🎙️主持人B：
+沒錯，這個議題值得我們從多個角度來分析。
+
+🎙️主持人A：
+感謝大家今天的收聽，我們下次再見！
+"""
+        
         return PodcastScript(
-            title=f"關於{request.topic}的客語播客",
-            introduction=f"大家好，歡迎收聽今天的客語播客。今天我們要聊的主題是{request.topic}。",
-            main_content=f"讓我們一起來探討{request.topic}這個有趣的話題。這是一個值得深入了解的主題，讓我們從不同角度來看看這個議題。",
-            conclusion="謝謝大家的收聽，希望今天的內容對您有所幫助。我們下次再見！",
+            title=f"關於{request.topic}的討論",
+            hosts=["主持人A", "主持人B"],
+            full_dialogue=fallback_dialogue,
             estimated_duration_minutes=request.duration or 10,
             key_points=[f"{request.topic}相關要點"],
             sources_mentioned=["一般知識"]
@@ -232,7 +263,7 @@ class PydanticAIService:
 
 
 # 使用範例和測試函數
-async def test_pydantic_ai_service():
+async def test_pydantic_ai_service(custom_topic: str = None, custom_tone: str = None, custom_duration: int = None):
     """測試 Pydantic AI 服務"""
     try:
         print("🧪 開始測試 Pydantic AI 服務...")
@@ -247,11 +278,11 @@ async def test_pydantic_ai_service():
             service = PydanticAIService(use_twcc=False)
             print("✅ 成功初始化 Gemini 服務")
         
-        # 測試請求
+        # 測試請求 - 支援自定義輸入
         test_request = PodcastGenerationRequest(
-            topic="客家傳統文化與現代科技的結合",
-            tone="educational",
-            duration=15
+            topic=custom_topic or "客家傳統文化與現代科技的結合",
+            tone=custom_tone or "educational",
+            duration=custom_duration or 15
         )
         
         print(f"📋 測試主題: {test_request.topic}")
@@ -305,6 +336,71 @@ async def test_twcc_models():
             continue
 
 
+async def test_with_custom_text():
+    """使用自定義文本進行測試"""
+    print("📝 自定義文本測試")
+    print("=" * 50)
+    
+    # 基於您提供的新聞內容設計的客家播客主題
+    custom_topics = [
+        "菲律賓總統訪美：從客家人的國際視野看亞太局勢變化",
+        "中美貿易關稅爭議：客家商人如何看待國際經濟局勢", 
+        "南海紛爭與客家海外社群：東南亞華人的處境與思考",
+        "美菲同盟關係：客家人在國際政治中的角色與觀點"
+    ]
+    
+    service = PydanticAIService(use_twcc=True)
+    
+    for i, topic in enumerate(custom_topics, 1):
+        print(f"\n🎯 測試主題 {i}: {topic}")
+        print("-" * 50)
+        
+        # 根據主題調整風格和時長
+        tone_map = ["educational", "casual", "storytelling", "interview"]
+        duration_map = [12, 10, 15, 18]
+        
+        test_request = PodcastGenerationRequest(
+            topic=topic,
+            tone=tone_map[(i-1) % 4],
+            duration=duration_map[(i-1) % 4]
+        )
+        
+        print(f"📋 風格: {test_request.tone}")
+        print(f"⏱️  時長: {test_request.duration} 分鐘")
+        
+        try:
+            result = await service.generate_complete_podcast_content(test_request)
+            
+            if result.get("success"):
+                script = result['structured_script']
+                print(f"✅ 成功生成播客")
+                print(f"🏷️  標題: {script['title']}")
+                print(f"📝 開場預覽: {script['introduction'][:150]}...")
+                print(f"🎯 關鍵要點: {', '.join(script['key_points'])}")
+                print(f"📚 資料來源: {', '.join(script['sources_mentioned'])}")
+                
+                # 顯示完整腳本（限制長度以便閱讀）
+                if i == 1:  # 只顯示第一個主題的完整腳本
+                    print(f"\n📜 完整腳本預覽:")
+                    print("=" * 40)
+                    print(result['full_content'])
+                    print("=" * 40)
+            else:
+                print(f"❌ 生成失敗: {result.get('error', 'Unknown error')}")
+                
+        except Exception as e:
+            print(f"❌ 測試失敗: {e}")
+            
+        print("\n" + "="*50)
+
+
 if __name__ == "__main__":
-    # 執行測試
-    asyncio.run(test_pydantic_ai_service())
+    # 執行測試 - 您可以選擇要執行哪個測試
+    import sys
+    
+    if len(sys.argv) > 1 and sys.argv[1] == "custom":
+        # 執行自定義測試: python pydantic_ai_service.py custom
+        asyncio.run(test_with_custom_text())
+    else:
+        # 執行標準測試: python pydantic_ai_service.py
+        asyncio.run(test_pydantic_ai_service())
