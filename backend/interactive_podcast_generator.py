@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Hakkast 互動式播客生成系統
+Hakkast 互動式播客生成系统
 用戶可選擇主題 → 爬取相關文章 → AI生成播客腳本
 """
 
@@ -134,38 +134,46 @@ async def interactive_podcast_generator():
         ])
         
         # 生成播客腳本
+        # ...爬蟲完後...
+
         podcast_service = PydanticAIService()
-        
-        # 創建播客生成請求
+
+        summaries = []
+        print("🔎 開始逐篇摘要：")
+        for idx, article in enumerate(crawled_articles, 1):
+            print(f"\n--- 第 {idx} 篇 ---")
+            print(f"標題: {article.title}")
+            print("摘要生成中...")
+            # 產生摘要（不是播客腳本！）
+            summary = await podcast_service.summarize_article(
+                f"請用500字摘要以下新聞內容，只用真實新聞細節，不要虛構：\n{article.content or article.summary}"
+            )
+            print(f"【摘要】（{len(summary)}字）：\n{summary}\n")
+            summaries.append(f"標題: {article.title}\n摘要: {summary}\n來源: {article.url}")
+
+        combined_summary = "\n\n".join(summaries)
+
+        print("\n🚀 三篇摘要已完成，準備丟入 Llama3 生成播客腳本...")
+        print("執行中...（請稍候，AI 正在生成約2500字腳本）\n")
+
         request = PodcastGenerationRequest(
             topic=main_title,
-            content=combined_content,
-            tone="casual",  # 修正為有效的 tone 值
+            content=combined_summary,
+            tone="casual",
             duration=15
         )
-        
+
         podcast_script = await podcast_service.generate_podcast_script(
             request=request,
             crawled_content=crawled_articles
         )
-        
-        print()
-        print("🎉 " + "="*60)
-        print("🎉  播客腳本生成完成！")
-        print("🎉 " + "="*60)
-        print()
-        
-        # 顯示生成結果
-        print("📝 播客腳本預覽:")
-        print("-" * 50)
-        print(f"🎙️ 標題: {podcast_script.title}")
-        print(f"👥 主持人: {podcast_script.hosts}")
-        print(f"⏱️ 預估時長: {podcast_script.estimated_duration_minutes} 分鐘")
-        print(f"🏷️ 關鍵詞: {', '.join(podcast_script.key_points)}")
-        print()
-        print("💬 對話內容:")
+
+        print("\n🎉 播客腳本生成完成！")
+        print(f"腳本字數：{len(podcast_script.full_dialogue)}")
+        if len(podcast_script.full_dialogue) < 2000:
+            print("⚠️ 產出字數偏少，建議檢查摘要長度或強化 prompt。")
+        print("\n📝 播客腳本預覽：")
         print(podcast_script.full_dialogue[:500] + "...")
-        print()
         
         # 詢問是否要查看完整腳本
         full_script_choice = input("📜 是否要查看完整播客腳本？(y/N): ").strip().lower()

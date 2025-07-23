@@ -11,7 +11,6 @@ from pydantic_ai.models.openai import OpenAIModel
 import asyncio
 import os
 from datetime import datetime
-
 from app.core.config import settings
 from app.models.podcast import PodcastGenerationRequest
 from app.models.crawler import CrawledContent
@@ -39,20 +38,20 @@ class ContentAnalysis(BaseModel):
 
 class PydanticAIService:
     """使用 Pydantic AI 的新 AI 服務，支援 TWCC AFS 和 Gemini 模型"""
-    
+ 
     def __init__(self, use_twcc: bool = True):
         self.use_twcc = use_twcc
         
         if use_twcc and settings.TWCC_API_KEY and settings.TWCC_BASE_URL:
             # 使用 TWCC AFS 模型
-            print("🔧 使用 TWCC AFS 模型...")
+            print("使用 TWCC AFS 模型...")
             # 設定環境變數供 OpenAI 客戶端使用
             os.environ["OPENAI_API_KEY"] = settings.TWCC_API_KEY
             os.environ["OPENAI_BASE_URL"] = settings.TWCC_BASE_URL
             self.model = OpenAIModel(settings.TWCC_MODEL_NAME)
         elif settings.GEMINI_API_KEY:
             # 使用 Gemini 模型作為備選
-            print("🔧 使用 Gemini 模型...")
+            print("使用 Gemini 模型...")
             # 設定環境變數供 Gemini 客戶端使用
             os.environ["GEMINI_API_KEY"] = settings.GEMINI_API_KEY
             self.model = GeminiModel('gemini-1.5-flash')
@@ -95,30 +94,36 @@ class PydanticAIService:
                - 經濟層面：討論貿易、經濟合作等議題
                - 總結：歸納重點和後續發展預測
                - 結尾：感謝收聽和預告
-               
             4. 對話風格：
                - 專業深入但通俗易懂
                - 一問一答，互相補充和深入
                - 每段對話都有實質內容，避免空洞
                - 包含具體的數據、事實和背景資訊
                - 每段對話前標註說話者（🎙️主持人A: / 🎙️主持人B:）
-               
             5. 內容深度要求：
                - 分析新聞背後的深層原因
                - 討論地緣政治和戰略意義
                - 解釋複雜的國際關係
                - 提供多角度的觀點
                - 預測可能的後續發展
-               
-            6. 長度要求：生成足夠長的對話內容，確實符合目標時長
-            
+            6. 長度要求：生成足夠長的對話內容，確實符合目標時長（例如三篇新聞共15分鐘，每篇約5分鐘）
+            7. 串接要求：三篇新聞請以自然的對話方式串接，主持人能順暢地從一則新聞帶到下一則新聞，讓聽眾感覺主題連貫。
             參考優質對話風格：
             - 不只陳述事實，還要分析原因和影響
             - 用"沒錯，而且..."、"對，但有趣的是..."等過渡語
             - 包含"從新聞來看..."、"這背後可不單純..."等分析性語句
             - 總結時用"我們總結一下今天的重點..."
-            
             請用繁體中文撰寫，風格專業且有深度。
+            """
+        )
+        
+        # 新增摘要 agent
+        self.summarizer = Agent(
+            model=self.model,
+            result_type=str,
+            system_prompt="""
+            你是一位專業新聞摘要員，只產生純文字摘要，不要主持人、對話或虛構內容。
+            請用繁體中文，濃縮新聞重點，字數約500字。
             """
         )
 
@@ -172,9 +177,12 @@ class PydanticAIService:
         # 如果有爬取的內容，加入參考資料
         if crawled_content:
             context_info += "\n\n參考資料：\n"
-            for content in crawled_content[:3]:  # 限制使用前3篇文章
-                context_info += f"- 標題：{content.title}\n  摘要：{content.summary[:200]}...\n"
-        
+            for content in crawled_content[:3]:  
+                context_info += (
+                    f"- 標題：{content.title}\n"
+                    f"  內容：{(content.content or content.summary)[:1500]}...\n"
+                )
+                
         try:
             result = await self.script_generator.run(context_info)
             return result.data
@@ -189,42 +197,91 @@ class PydanticAIService:
         crawled_content: Optional[List[CrawledContent]] = None
     ) -> Dict[str, Any]:
         """完整的播客內容生成流程"""
-        
         try:
-            # Step 1: 分析內容需求
-            print("🔍 正在分析內容需求...")
+            print("正在分析內容需求...")
             content_analysis = await self.analyze_content_requirements(request.topic, request.tone)
-            
-            # Step 2: 生成結構化腳本
-            print("📝 正在生成播客腳本...")
-            script = await self.generate_podcast_script(request, crawled_content, content_analysis)
-            
+
+            # Step 1: 逐篇摘要
+            summaries = []
+            if crawled_content:
+                for content in crawled_content[:3]:
+                    summary = await self.summarize_article(content.content or content.summary)
+                    summaries.append(f"標題：{content.title}\n摘要：{summary}\n來源：{content.url}")
+
+            # Step 2: 合併摘要，丟給 LLM 產生播客腳本
+            combined_summary = "\n\n".join(summaries)
+            podcast_prompt = (
+                "請根據以下三篇新聞的重點摘要，逐一分析並串接，"
+                "生成一份約2500字、15分鐘的雙主持人播客腳本。"
+                "內容必須涵蓋三篇新聞的重點，且不要虛構：\n"
+                f"{combined_summary}"
+            )
+            # 用腳本生成 agent 產生播客腳本
+            script = await self.script_generator.run(podcast_prompt)
+
+            # Step 2: 分段生成
+            segments = []
+
+            # 開場
+            opening_prompt = (
+                "請根據以下三篇新聞摘要，生成播客開場白（約700字），"
+                "介紹主題並吸引聽眾：\n"
+                f"{combined_summary}"
+            )
+            opening = await self.generate_podcast_script_segment(opening_prompt)
+            segments.append(opening)
+
+            # 三篇新聞分別生成
+            for idx, summary in enumerate(summaries, 1):
+                news_prompt = (
+                    f"請根據以下新聞摘要，生成播客對話段落（約800字），"
+                    f"主題：第{idx}篇新聞\n{summary}"
+                )
+                news_segment = await self.generate_podcast_script_segment(news_prompt)
+                segments.append(news_segment)
+
+            # 結尾
+            closing_prompt = (
+                "請根據以上內容，生成播客結尾總結（約400字），"
+                "歸納重點並預告下集。"
+            )
+            closing = await self.generate_podcast_script_segment(closing_prompt)
+            segments.append(closing)
+
+            # 合併所有段落
+            full_script = "\n\n".join(segments)
+
             # Step 3: 組合完整內容（對話式腳本）
             full_content = f"""
-🎙️Podcast 標題：{script.title}
+            🎙️Podcast 標題：{script.title}
 
-🎧主持人：{' 與 '.join(script.hosts)}
+            🎧主持人：{' 與 '.join(script.hosts)}
 
-{script.full_dialogue}
-"""
-            
+            {script.full_dialogue}
+            """
+
             return {
                 "success": True,
-                "model_info": {
-                    "provider": "TWCC AFS" if self.use_twcc else "Google Gemini",
-                    "model_name": settings.TWCC_MODEL_NAME if self.use_twcc else "gemini-1.5-flash"
-                },
+                "model_info": {...},
                 "content_analysis": content_analysis.dict(),
-                "structured_script": script.dict(),
-                "full_content": full_content,
+                "structured_script": {
+                    "title": script.title if 'script' in locals() else request.topic,
+                    "hosts": ["主持人A", "主持人B"],
+                    "full_dialogue": full_script,
+                    "estimated_duration_minutes": request.duration,
+                    "key_points": [],
+                    "sources_mentioned": []
+                },
+                "full_content": full_script,
                 "generation_timestamp": datetime.now().isoformat(),
                 "processing_steps": [
                     "內容需求分析",
-                    "結構化腳本生成", 
+                    "逐篇摘要",
+                    "分段生成",
                     "內容整合完成"
                 ]
             }
-            
+
         except Exception as e:
             print(f"Complete generation error: {e}")
             return {
@@ -236,21 +293,21 @@ class PydanticAIService:
     def _create_fallback_script(self, request: PodcastGenerationRequest) -> PodcastScript:
         """創建備用腳本"""
         fallback_dialogue = f"""
-🎙️主持人A：
-歡迎收聽今天的播客節目，我是主持人A。
+        🎙️主持人A：
+        歡迎收聽今天的播客節目，我是主持人A。
 
-🎙️主持人B：
-我是主持人B。今天我們要聊的主題是{request.topic}。
+        🎙️主持人B：
+        我是主持人B。今天我們要聊的主題是{request.topic}。
 
-🎙️主持人A：
-這確實是一個很有趣的話題，讓我們來深入討論一下。
+        🎙️主持人A：
+        這確實是一個很有趣的話題，讓我們來深入討論一下。
 
-🎙️主持人B：
-沒錯，這個議題值得我們從多個角度來分析。
+        🎙️主持人B：
+        沒錯，這個議題值得我們從多個角度來分析。
 
-🎙️主持人A：
-感謝大家今天的收聽，我們下次再見！
-"""
+        🎙️主持人A：
+        感謝大家今天的收聽，我們下次再見！
+        """
         
         return PodcastScript(
             title=f"關於{request.topic}的討論",
@@ -261,57 +318,68 @@ class PydanticAIService:
             sources_mentioned=["一般知識"]
         )
 
+    async def summarize_article(self, article_content: str) -> str:
+        """用 LLM 產生單篇新聞摘要，避免幻覺"""
+        prompt = f"請用550以內字摘要以下新聞內容，只用真實新聞細節，不要虛構：\n{article_content}"
+        result = await self.summarizer.run(prompt)
+        return str(result.data)
+
+    async def generate_podcast_script_segment(self, segment_prompt: str) -> str:
+        """分段生成播客腳本片段"""
+        result = await self.script_generator.run(segment_prompt)
+        return str(result.data.full_dialogue) if hasattr(result.data, "full_dialogue") else str(result.data)
+
 
 # 使用範例和測試函數
-async def test_pydantic_ai_service(custom_topic: str = None, custom_tone: str = None, custom_duration: int = None):
-    """測試 Pydantic AI 服務"""
+"""async def test_pydantic_ai_service(custom_topic: str = None, custom_tone: str = None, custom_duration: int = None):
+    測試 Pydantic AI 服務
     try:
-        print("🧪 開始測試 Pydantic AI 服務...")
+        print("開始測試 Pydantic AI 服務...")
         
-        # 測試 TWCC 模型（如果可用）
+
         try:
             service = PydanticAIService(use_twcc=True)
-            print("✅ 成功初始化 TWCC AFS 服務")
+            print("成功初始化 TWCC AFS 服務")
         except Exception as e:
-            print(f"⚠️ TWCC 初始化失敗: {e}")
-            print("🔄 嘗試使用 Gemini 備用模型...")
+            print(f"TWCC 初始化失敗: {e}")
+            print("嘗試使用 Gemini 備用模型...")
             service = PydanticAIService(use_twcc=False)
-            print("✅ 成功初始化 Gemini 服務")
+            print("成功初始化 Gemini 服務")
         
-        # 測試請求 - 支援自定義輸入
+
         test_request = PodcastGenerationRequest(
             topic=custom_topic or "客家傳統文化與現代科技的結合",
             tone=custom_tone or "educational",
             duration=custom_duration or 15
         )
         
-        print(f"📋 測試主題: {test_request.topic}")
-        print(f"📋 測試風格: {test_request.tone}")
-        print(f"📋 目標時長: {test_request.duration} 分鐘")
+        print(f"測試主題: {test_request.topic}")
+        print(f"測試風格: {test_request.tone}")
+        print(f"目標時長: {test_request.duration} 分鐘")
         
-        # 執行完整生成流程
+
         result = await service.generate_complete_podcast_content(test_request)
-        print("🎉 生成結果：", result)
+        print("生成結果：", result)
         return result
         
     except Exception as e:
-        print(f"❌ 測試失敗: {e}")
+        print(f"測試失敗: {e}")
         import traceback
         traceback.print_exc()
-        return None
+        return None"""
 
 
-async def test_twcc_models():
-    """測試不同的 TWCC 模型"""
+"""async def test_twcc_models():
+    測試不同的 TWCC 模型
     twcc_models = [
-        "llama3.3-ffm-70b-32k-chat",  # 最新的 FFM 模型
-        "llama3.1-ffm-70b-32k-chat",  # Llama3.1 FFM
-        "llama3-ffm-70b-chat",        # Llama3 FFM
-        "taide-lx-7b-chat"            # 台灣本土化模型
+        "llama3.3-ffm-70b-32k-chat",  
+        "llama3.1-ffm-70b-32k-chat",  
+        "llama3-ffm-70b-chat",       
+        "taide-lx-7b-chat"            
     ]
     
     for model_name in twcc_models:
-        print(f"\n🧪 測試模型: {model_name}")
+        print(f"\n測試模型: {model_name}")
         try:
             # 暫時修改配置
             original_model = getattr(settings, 'TWCC_MODEL_NAME', '')
@@ -332,67 +400,8 @@ async def test_twcc_models():
             settings.TWCC_MODEL_NAME = original_model
             
         except Exception as e:
-            print(f"❌ {model_name} 測試失敗: {e}")
-            continue
-
-
-async def test_with_custom_text():
-    """使用自定義文本進行測試"""
-    print("📝 自定義文本測試")
-    print("=" * 50)
-    
-    # 基於您提供的新聞內容設計的客家播客主題
-    custom_topics = [
-        "菲律賓總統訪美：從客家人的國際視野看亞太局勢變化",
-        "中美貿易關稅爭議：客家商人如何看待國際經濟局勢", 
-        "南海紛爭與客家海外社群：東南亞華人的處境與思考",
-        "美菲同盟關係：客家人在國際政治中的角色與觀點"
-    ]
-    
-    service = PydanticAIService(use_twcc=True)
-    
-    for i, topic in enumerate(custom_topics, 1):
-        print(f"\n🎯 測試主題 {i}: {topic}")
-        print("-" * 50)
-        
-        # 根據主題調整風格和時長
-        tone_map = ["educational", "casual", "storytelling", "interview"]
-        duration_map = [12, 10, 15, 18]
-        
-        test_request = PodcastGenerationRequest(
-            topic=topic,
-            tone=tone_map[(i-1) % 4],
-            duration=duration_map[(i-1) % 4]
-        )
-        
-        print(f"📋 風格: {test_request.tone}")
-        print(f"⏱️  時長: {test_request.duration} 分鐘")
-        
-        try:
-            result = await service.generate_complete_podcast_content(test_request)
-            
-            if result.get("success"):
-                script = result['structured_script']
-                print(f"✅ 成功生成播客")
-                print(f"🏷️  標題: {script['title']}")
-                print(f"📝 開場預覽: {script['introduction'][:150]}...")
-                print(f"🎯 關鍵要點: {', '.join(script['key_points'])}")
-                print(f"📚 資料來源: {', '.join(script['sources_mentioned'])}")
-                
-                # 顯示完整腳本（限制長度以便閱讀）
-                if i == 1:  # 只顯示第一個主題的完整腳本
-                    print(f"\n📜 完整腳本預覽:")
-                    print("=" * 40)
-                    print(result['full_content'])
-                    print("=" * 40)
-            else:
-                print(f"❌ 生成失敗: {result.get('error', 'Unknown error')}")
-                
-        except Exception as e:
-            print(f"❌ 測試失敗: {e}")
-            
-        print("\n" + "="*50)
-
+            print(f"{model_name} 測試失敗: {e}")
+            continue"""
 
 if __name__ == "__main__":
     # 執行測試 - 您可以選擇要執行哪個測試
