@@ -58,7 +58,9 @@
               class="p-2 rounded-lg text-hakkast-navy hover:bg-gray-100 transition-colors"
               aria-label="開啟選單"
             >
-              <img src="/icon.png" alt="Menu Icon" class="w-6 h-6" />
+            <svg class="w-5 h-5 rounded-xl object-contain text-gray-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
             </button>
           </div>
         </div>

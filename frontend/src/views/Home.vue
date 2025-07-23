@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen">
     <!-- Hero Section -->
-    <section class="relative hero-pattern py-32 lg:py-42 overflow-hidden">
+    <section class="relative hero-pattern py-10 sm:py-20 md:py-26 lg:py-32 overflow-hidden">
       <div class="absolute inset-0 bg-gradient-to-br from-white/50 to-white/30"></div>
       
       <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -13,7 +13,7 @@
               <span class="text-sm font-medium text-hakkast-navy">AI驅動的客語創新</span>
             </div>
             <div class="flex justify-center lg:justify-start my-4 mb-8">
-              <img src="/logo.png" alt="Hakkast Logo" class="w-82 max-w-lg object-contain rounded-xl" />
+              <img src="/logo.png" alt="Hakkast Logo" class="w-full sm:w-82 max-w-lg object-contain rounded-xl" />
             </div>
             <p class="text-xl text-gray-600 mb-8 leading-relaxed max-w-lg mx-auto lg:mx-0">
               運用先進AI技術，一鍵生成個人化客語Podcast。<br />
