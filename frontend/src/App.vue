@@ -5,15 +5,17 @@
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
           <!-- Brand Logo -->
-          <div class="flex items-center space-x-3">
-            <img src="/favicon.ico" alt="Hakkast Logo" class="w-10 h-10 rounded-xl object-contain" />
-            <div>
-              <h1 class="text-2xl font-display font-bold text-gradient">
-                Hakkast
-              </h1>
-              <p class="text-xs text-gray-500 font-medium">AI客語Podcast</p>
+           <router-link to="/">
+            <div class="flex items-center space-x-3">
+              <img src="/favicon.ico" alt="Hakkast Logo" class="w-10 h-10 rounded-xl object-contain" />
+              <div>
+                <h1 class="text-2xl font-display font-bold text-gradient">
+                  Hakkast
+                </h1>
+                <p class="text-xs text-gray-500 font-medium">AI客語Podcast</p>
+              </div>
             </div>
-          </div>
+          </router-link>
           <!-- Navigation Links -->
           <div class="hidden md:flex space-x-2">
             <router-link 
@@ -123,7 +125,7 @@
           <div>
             <h4 class="font-semibold mb-4 text-hakkast-gold">功能特色</h4>
             <ul class="space-y-2 text-sm text-gray-300">
-              <li>• AI只會內容生成</li>
+              <li>• AI智慧內容生成</li>
               <li>• 真實客語翻譯</li>
               <li>• 高品質語音合成</li>
               <li>• 多語言支援</li>

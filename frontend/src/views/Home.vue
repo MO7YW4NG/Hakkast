@@ -36,7 +36,7 @@
                 <div class="w-8 h-8 bg-hakkast-gradient rounded-lg flex items-center justify-center">
                   <span class="text-white text-xs">AI</span>
                 </div>
-                <span>智能生成</span>
+                <span>智慧生成</span>
               </div>
               <div class="flex items-center space-x-2">
                 <div class="w-8 h-8 bg-hakkast-gold rounded-lg flex items-center justify-center">
