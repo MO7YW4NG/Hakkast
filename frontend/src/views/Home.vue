@@ -7,7 +7,7 @@
       <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid lg:grid-cols-2 gap-12 items-center">
           <!-- Left Content -->
-          <motion.div :initial="{ opacity: 0, x: -60 }" :animate="{ opacity: 1, x: 0 }" :transition="{ duration: 0.8 }" class="text-center lg:text-left animate-slide-up">
+          <motion.div :initial="{ opacity: 0, x: -60 }" :animate="{ opacity: 1, x: 0 }" :transition="{ duration: 0.8 }" class="text-center lg:text-left">
             <div class="inline-flex items-center space-x-2 bg-hakkast-gold/20 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
               <span class="w-2 h-2 bg-hakkast-gold rounded-full animate-pulse"></span>
               <span class="text-sm font-medium text-hakkast-navy">AI驅動的客語創新</span>
@@ -190,10 +190,10 @@
         <motion.div :initial="{ opacity: 0, scale: 0.95 }" :animate="{ opacity: 1, scale: 1 }" :transition="{ duration: 0.7, delay: 0.5 }" class="text-center">
           <div class="card-gradient p-12 max-w-4xl mx-auto">
             <h3 class="text-3xl font-display font-bold text-white mb-4">
-              準備開始您的客語播客之旅嗎？
+              準備開始您的客語Podcast之旅嗎？
             </h3>
             <p class="text-xl text-white/90 mb-8">
-              只需幾分鐘，就能創造出專業品質的客語播客內容
+              只需幾分鐘，就能創造出專業品質的客語Podcast
             </p>
             <router-link to="/generate" class="btn btn-gold text-lg">
               <span class="mr-2">🚀</span>
@@ -236,7 +236,7 @@
             <span class="text-4xl">📧</span>
           </div>
           <h2 class="text-4xl font-display font-bold text-white mb-4">
-            訂閱個人化客語播客
+            訂閱個人化客語Podcast
           </h2>
           <p class="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
             每日或每週收到為您量身打造的客語播客內容，透過電子郵件配送或 RSS 訂閱
@@ -246,13 +246,13 @@
         <div class="grid md:grid-cols-2 gap-8 mb-10">
           <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
             <div class="text-3xl mb-4">📅</div>
-            <h3 class="text-xl font-semibold text-white mb-2">每日播客</h3>
+            <h3 class="text-xl font-semibold text-white mb-2">每日Podcast</h3>
             <p class="text-white/80 text-sm">每天早上收到新鮮的客語內容，讓您的一天從客家文化開始</p>
           </div>
           <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-6">
             <div class="text-3xl mb-4">📆</div>
             <h3 class="text-xl font-semibold text-white mb-2">每週精選</h3>
-            <p class="text-white/80 text-sm">每週收到精心策劃的主題播客，深度探索客家文化各面向</p>
+            <p class="text-white/80 text-sm">每週收到精心策劃的主題Podcast，深度探索客家文化各面向</p>
           </div>
         </div>
 
@@ -279,7 +279,7 @@
           <div class="pt-4">
             <router-link to="/subscription" class="btn btn-gold text-lg">
               <span class="mr-2">🎙️</span>
-              開始訂閱播客
+              開始訂閱
             </router-link>
           </div>
         </div>
