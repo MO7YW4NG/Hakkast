@@ -40,6 +40,15 @@ def extract_published_date(url: str) -> datetime:
         print(f"擷取發佈時間失敗：{e}")
     return datetime.now()
 
+def clean_content(raw_content: str) -> str:
+    """移除社群連結&廣告"""
+    markers = ["Facebook", "Twitter", "LinkedIn", "Print"]
+    for marker in markers:
+        idx = raw_content.find(marker)
+        if idx != -1:
+            raw_content = raw_content[:idx]
+    return raw_content.strip()
+
 async def crawl_news(topic: str, max_articles: int = 5):
     crawled = []
     ...
@@ -106,6 +115,7 @@ async def crawl_news(topic: str, max_articles: int = 5):
             content = getattr(result, "content", "")
 
             raw_content = content if content and len(content.strip()) > 50 else extract_fallback_content(result.url)
+            raw_content = clean_content(raw_content)  # << 新增這行
             raw_summary = raw_content if raw_content else markdown
             summary = clean_markdown(raw_summary).strip()[:300]
             published_time = extract_published_date(result.url)

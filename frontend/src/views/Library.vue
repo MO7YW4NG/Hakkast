@@ -21,28 +21,33 @@
         </div>
       </div>
 
-      <!-- Stats Bar -->
-      <div v-if="podcasts.length > 0" class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
-        <div class="card p-6 text-center">
-          <div class="text-3xl font-bold text-hakkast-navy mb-2">{{ podcasts.length }}</div>
-          <div class="text-sm text-gray-600">總播客數</div>
+      <!-- Search & Filter Bar -->
+      <div class="flex flex-col md:flex-row md:items-center gap-4 mb-8">
+        <input v-model="searchQuery" type="text" placeholder="搜尋標題、主題、內容..." class="input max-w-md" />
+        <div class="flex flex-wrap gap-2">
+          <button v-for="filter in filterOptions" :key="filter.value" @click="currentFilter = filter.value" :class="[
+            'px-4 py-2 rounded-xl font-medium transition-all',
+            currentFilter === filter.value ? 'bg-hakkast-gradient text-white shadow-lg' : 'bg-white text-hakkast-navy border border-gray-200 hover:border-hakkast-purple'
+          ]">
+            <span class="mr-2">{{ filter.emoji }}</span>{{ filter.label }}
+          </button>
+          <button v-for="lang in languageOptions" :key="lang.value" @click="currentLanguage = lang.value" :class="[
+            'px-4 py-2 rounded-xl font-medium transition-all',
+            currentLanguage === lang.value ? 'bg-hakkast-lavender text-white shadow-lg' : 'bg-white text-hakkast-lavender border border-gray-200 hover:border-hakkast-purple'
+          ]">
+            <span class="mr-2">🌐</span>{{ lang.label }}
+          </button>
         </div>
-        <div class="card p-6 text-center">
-          <div class="text-3xl font-bold text-hakkast-purple mb-2">{{ totalDuration }}</div>
-          <div class="text-sm text-gray-600">總時長(分)</div>
-        </div>
-        <div class="card p-6 text-center">
-          <div class="text-3xl font-bold text-hakkast-lavender mb-2">{{ audioCount }}</div>
-          <div class="text-sm text-gray-600">含語音</div>
-        </div>
-        <div class="card p-6 text-center">
-          <div class="text-3xl font-bold text-hakkast-gold mb-2">{{ topTone }}</div>
-          <div class="text-sm text-gray-600">常用風格</div>
+        <div class="flex-1"></div>
+        <div v-if="selectedIds.length > 0" class="flex gap-2">
+          <button class="btn btn-gold" @click="batchDelete"><span class="mr-2">🗑️</span>批次刪除</button>
+          <button class="btn btn-ghost" @click="showToast('批次分享功能尚未實作')"><span class="mr-2">📤</span>批次分享</button>
+          <button class="btn btn-ghost" @click="showToast('批次下載功能尚未實作')"><span class="mr-2">⬇️</span>批次下載</button>
         </div>
       </div>
-      
+
       <!-- Empty State -->
-      <div v-if="podcasts.length === 0" class="text-center py-20">
+      <div v-if="filteredPodcasts.length === 0" class="text-center py-20">
         <div class="max-w-md mx-auto">
           <div class="w-32 h-32 bg-hakkast-gradient rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-xl">
             <span class="text-6xl">🎙️</span>
@@ -61,52 +66,37 @@
       </div>
       
       <!-- Podcast Grid -->
-      <div v-else class="space-y-8">
-        <!-- Filter & Sort -->
-        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <div class="flex flex-wrap gap-2">
-            <button 
-              v-for="filter in filterOptions"
-              :key="filter.value"
-              @click="currentFilter = filter.value"
-              :class="[
-                'px-4 py-2 rounded-xl font-medium transition-all duration-200',
-                currentFilter === filter.value
-                  ? 'bg-hakkast-gradient text-white shadow-lg'
-                  : 'bg-white text-hakkast-navy border border-gray-200 hover:border-hakkast-purple'
-              ]"
-            >
-              <span class="mr-2">{{ filter.emoji }}</span>
-              {{ filter.label }}
-            </button>
+      <motion.div :initial="{ opacity: 0, y: 40 }" :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.7 }" v-if="filteredPodcasts.length > 0" class="space-y-8">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-2">
+          <div class="text-gray-500 text-sm">共 {{ filteredPodcasts.length }} 筆</div>
+          <div class="flex gap-2">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" v-model="selectAll" @change="toggleSelectAll" />
+              <span>全選</span>
+            </label>
           </div>
-          
-          <select v-model="sortBy" class="input max-w-xs">
-            <option value="newest">最新建立</option>
-            <option value="oldest">最早建立</option>
-            <option value="duration-long">時長較長</option>
-            <option value="duration-short">時長較短</option>
-          </select>
         </div>
-
-        <!-- Podcasts Grid -->
         <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <div
-            v-for="podcast in filteredPodcasts"
-            :key="podcast.id"
-            class="group"
-          >
+          <div v-for="podcast in filteredPodcasts" :key="podcast.id" class="group relative">
             <div class="card p-6 group-hover:scale-105 transition-all duration-300">
+              <div class="absolute top-4 left-4">
+                <input type="checkbox" :value="podcast.id" v-model="selectedIds" />
+              </div>
               <!-- Header -->
               <div class="flex items-start justify-between mb-4">
                 <div class="flex-1">
                   <h3 class="text-lg font-semibold text-hakkast-navy line-clamp-2 mb-2">
                     {{ podcast.title }}
                   </h3>
-                  <div class="flex items-center space-x-2 text-sm text-gray-500">
+                  <div class="flex items-center space-x-2 text-sm text-gray-500 mb-1">
                     <span>{{ formatDate(podcast.createdAt) }}</span>
                     <span>•</span>
                     <span class="capitalize">{{ getToneLabel(podcast.tone) }}</span>
+                  </div>
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    <span class="px-2 py-0.5 rounded bg-hakkast-gold/10 text-hakkast-gold text-xs">{{ podcast.topic }}</span>
+                    <span class="px-2 py-0.5 rounded bg-hakkast-purple/10 text-hakkast-purple text-xs">{{ getLanguageLabel(podcast.language) }}</span>
+                    <span v-if="podcast.audioUrl" class="px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs">可播放</span>
                   </div>
                 </div>
                 <div class="ml-3 flex-shrink-0">
@@ -115,65 +105,37 @@
                   </div>
                 </div>
               </div>
-
               <!-- Meta Info -->
               <div class="space-y-3 mb-6">
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-gray-600">主題</span>
-                  <span class="text-hakkast-navy font-medium truncate ml-2">{{ podcast.topic }}</span>
-                </div>
                 <div class="flex items-center justify-between text-sm">
                   <span class="text-gray-600">時長</span>
                   <span class="text-hakkast-purple font-medium">{{ podcast.duration }}分鐘</span>
                 </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-gray-600">語言</span>
-                  <span class="text-hakkast-lavender font-medium">{{ getLanguageLabel(podcast.language) }}</span>
-                </div>
-                <div v-if="podcast.audioUrl" class="flex items-center justify-between text-sm">
-                  <span class="text-gray-600">語音</span>
-                  <div class="flex items-center space-x-1">
-                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                    <span class="text-green-600 font-medium">可播放</span>
-                  </div>
-                </div>
               </div>
-
               <!-- Actions -->
               <div class="flex space-x-3">
-                <button
-                  @click="playPodcast(podcast)"
-                  class="btn btn-primary flex-1 text-sm"
-                >
-                  <span class="mr-2">▶️</span>
-                  播放
-                </button>
-                <button
-                  @click="deletePodcast(podcast.id)"
-                  class="btn btn-secondary text-sm px-4"
-                  title="刪除播客"
-                >
-                  🗑️
-                </button>
-                <button
-                  class="btn btn-ghost text-sm px-4"
-                  title="分享播客"
-                >
-                  📤
-                </button>
+                <button @click="playPodcast(podcast)" class="btn btn-primary flex-1 text-sm"><span class="mr-2">▶️</span>播放</button>
+                <button @click="deletePodcast(podcast.id)" class="btn btn-secondary text-sm px-4" title="刪除播客"><span>🗑️</span></button>
+                <button class="btn btn-ghost text-sm px-4" title="分享播客" @click="showToast('分享功能尚未實作')"><span>📤</span></button>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
-    
     <!-- Enhanced Podcast Player Modal -->
-    <div v-if="selectedPodcast" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fade-in">
-      <div class="max-w-5xl w-full max-h-[90vh] overflow-y-auto animate-slide-up">
+    <motion.div v-if="selectedPodcast" :initial="{ opacity: 0 }" :animate="{ opacity: 1 }" :exit="{ opacity: 0 }" :transition="{ duration: 0.4 }" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+      <div class="max-w-5xl w-full max-h-[90vh] overflow-y-auto">
         <PodcastPlayer :podcast="selectedPodcast" @close="closePlayer" />
       </div>
-    </div>
+    </motion.div>
+    <!-- Toast -->
+    <transition name="fade">
+      <div v-if="toastMessage" class="fixed bottom-8 right-8 bg-hakkast-purple text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
+        <span>✅</span>
+        <span>{{ toastMessage }}</span>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -181,6 +143,7 @@
 import { computed, ref } from 'vue'
 import { usePodcastStore } from '../stores/podcast'
 import PodcastPlayer from '../components/PodcastPlayer.vue'
+import { motion } from 'motion-v'
 import type { Podcast } from '../types/podcast'
 
 const podcastStore = usePodcastStore()
@@ -188,7 +151,11 @@ const podcastStore = usePodcastStore()
 const podcasts = computed(() => podcastStore.podcasts)
 const selectedPodcast = ref<Podcast | null>(null)
 const currentFilter = ref('all')
-const sortBy = ref('newest')
+const currentLanguage = ref('all')
+const searchQuery = ref('')
+const selectedIds = ref<string[]>([])
+const selectAll = ref(false)
+const toastMessage = ref('')
 
 const filterOptions = [
   { value: 'all', label: '全部', emoji: '📂' },
@@ -197,54 +164,55 @@ const filterOptions = [
   { value: 'storytelling', label: '故事敘述', emoji: '📖' },
   { value: 'interview', label: '訪談對話', emoji: '🎤' }
 ]
+const languageOptions = [
+  { value: 'all', label: '全部語言' },
+  { value: 'hakka', label: '純客語' },
+  { value: 'mixed', label: '客華混合' },
+  { value: 'bilingual', label: '雙語' }
+]
 
-// Computed stats
-const totalDuration = computed(() => {
-  return podcasts.value.reduce((total, podcast) => total + podcast.duration, 0)
-})
-
-const audioCount = computed(() => {
-  return podcasts.value.filter(podcast => podcast.audioUrl).length
-})
-
-const topTone = computed(() => {
-  if (podcasts.value.length === 0) return '-'
-  const toneCounts = podcasts.value.reduce((acc, podcast) => {
-    acc[podcast.tone] = (acc[podcast.tone] || 0) + 1
-    return acc
-  }, {} as Record<string, number>)
-  
-  const mostFrequent = Object.entries(toneCounts).sort(([,a], [,b]) => b - a)[0]
-  return getToneLabel(mostFrequent[0])
-})
-
-// Filtered and sorted podcasts
 const filteredPodcasts = computed(() => {
   let filtered = podcasts.value
-  
-  // Apply filter
   if (currentFilter.value !== 'all') {
     filtered = filtered.filter(podcast => podcast.tone === currentFilter.value)
   }
-  
-  // Apply sort
-  const sorted = [...filtered].sort((a, b) => {
-    switch (sortBy.value) {
-      case 'newest':
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      case 'oldest':
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
-      case 'duration-long':
-        return b.duration - a.duration
-      case 'duration-short':
-        return a.duration - b.duration
-      default:
-        return 0
-    }
-  })
-  
-  return sorted
+  if (currentLanguage.value !== 'all') {
+    filtered = filtered.filter(podcast => podcast.language === currentLanguage.value)
+  }
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase()
+    filtered = filtered.filter(podcast =>
+      podcast.title.toLowerCase().includes(q) ||
+      podcast.topic.toLowerCase().includes(q) ||
+      (podcast.hakkaContent && podcast.hakkaContent.toLowerCase().includes(q)) ||
+      (podcast.chineseContent && podcast.chineseContent.toLowerCase().includes(q))
+    )
+  }
+  return filtered
 })
+
+function toggleSelectAll() {
+  if (selectAll.value) {
+    selectedIds.value = filteredPodcasts.value.map(p => p.id)
+  } else {
+    selectedIds.value = []
+  }
+}
+
+function batchDelete() {
+  if (selectedIds.value.length === 0) return
+  if (confirm('確定要批次刪除選取的播客嗎？')) {
+    selectedIds.value.forEach(id => podcastStore.deletePodcast(id))
+    selectedIds.value = []
+    selectAll.value = false
+    showToast('已批次刪除')
+  }
+}
+
+function showToast(msg: string) {
+  toastMessage.value = msg
+  setTimeout(() => { toastMessage.value = '' }, 2000)
+}
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('zh-TW', {
@@ -297,6 +265,7 @@ const deletePodcast = async (id: string) => {
     if (selectedPodcast.value?.id === id) {
       selectedPodcast.value = null
     }
+    showToast('已刪除')
   }
 }
 </script>
