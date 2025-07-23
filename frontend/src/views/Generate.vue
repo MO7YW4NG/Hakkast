@@ -1,93 +1,68 @@
 <template>
-  <div class="min-h-screen py-12">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Header -->
-      <div class="text-center mb-12">
-        <div class="inline-flex items-center space-x-2 bg-hakkast-gold/10 rounded-full px-4 py-2 mb-4">
-          <span class="text-2xl">✨</span>
-          <span class="text-sm font-medium text-hakkast-navy">AI播客創作工作室</span>
-        </div>
-        <h1 class="text-4xl lg:text-5xl font-display font-bold text-hakkast-navy mb-4">
-          打造您的專屬<span class="text-gradient">客語播客</span>
-        </h1>
-        <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-          透過三步AI流程，將您的想法轉化為專業的客語播客內容
-        </p>
-      </div>
-
-      <div class="grid lg:grid-cols-2 gap-12 items-start">
-        <!-- Form Section -->
-        <div class="space-y-8">
-          <form @submit.prevent="generatePodcast" class="space-y-6">
-            <!-- Topic Input -->
-            <div class="card p-6">
-              <div class="flex items-center space-x-3 mb-4">
-                <div class="w-10 h-10 bg-hakkast-gradient rounded-xl flex items-center justify-center">
-                  <span class="text-white text-lg">💡</span>
-                </div>
-                <div>
-                  <h3 class="font-semibold text-hakkast-navy">播客主題</h3>
-                  <p class="text-sm text-gray-500">選擇您想要探討的話題</p>
-                </div>
+  <div class="min-h-screen py-12 bg-gradient-to-br from-white to-hakkast-gold/10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col lg:flex-row gap-10">
+      <!-- Left: Stepper + Form -->
+      <div class="flex flex-col gap-8 w-full lg:w-1/2">
+        <!-- AI Process Stepper with Animation -->
+        <motion.div :initial="{ opacity: 0, y: 30 }" :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.7 }" class="bg-white rounded-2xl shadow-lg p-6 mb-2">
+          <h3 class="text-lg font-semibold text-hakkast-navy mb-4 flex items-center gap-2">
+            <span class="text-2xl">⚡</span> AI 創作流程
+          </h3>
+          <div class="w-full h-2 bg-gray-100 rounded-full mb-4 overflow-hidden">
+            <div class="h-full bg-hakkast-gradient transition-all duration-700" :style="{ width: ((processSteps.filter(s=>s.completed).length/4)*100)+'%' }"></div>
+          </div>
+          <ol class="space-y-4">
+            <li v-for="(step, index) in processSteps" :key="index" class="flex items-center gap-4">
+              <motion.div :initial="{ scale: 0.8, opacity: 0.5 }" :animate="{ scale: step.completed ? 1.1 : 1, opacity: step.completed ? 1 : 0.5 }" :transition="{ duration: 0.4 }" :class="['w-8 h-8 flex items-center justify-center rounded-full font-bold', step.completed ? 'bg-hakkast-gradient text-white' : 'bg-gray-200 text-gray-400']">
+                {{ index + 1 }}
+              </motion.div>
+              <div>
+                <div :class="['font-medium', step.completed ? 'text-hakkast-navy' : 'text-gray-400']">{{ step.title }}</div>
+                <div class="text-xs text-gray-500">{{ step.description }}</div>
               </div>
+            </li>
+          </ol>
+        </motion.div>
+        <!-- Form Card -->
+        <div class="bg-white rounded-2xl shadow-xl p-8">
+          <h2 class="text-2xl font-bold text-hakkast-navy mb-6 flex items-center gap-2">
+            <span class="text-2xl">✨</span> 生成專屬播客
+          </h2>
+          <!-- Hot Topics Chips -->
+          <div class="mb-4">
+            <div class="mb-2 text-sm text-hakkast-navy font-medium">熱門主題</div>
+            <div class="flex flex-wrap gap-2">
+              <button v-for="topic in hotTopics" :key="topic" type="button" @click="form.topic = topic" class="px-3 py-1 rounded-full bg-hakkast-purple/10 text-hakkast-purple hover:bg-hakkast-purple/20 transition">
+                {{ topic }}
+              </button>
+            </div>
+          </div>
+          <form @submit.prevent="generatePodcast" class="space-y-6">
+            <!-- Topic -->
+            <div>
+              <label class="block text-sm font-medium text-hakkast-navy mb-2">播客主題</label>
               <input
                 id="topic"
                 v-model="form.topic"
                 type="text"
-                placeholder="例如：客家美食文化、遊戲最新消息、深度學習研究、科技新聞..."
+                placeholder="例如：客家美食文化、遊戲最新消息..."
                 class="input input-large"
                 required
               />
-              <CrawlerStatus :topic="form.topic" />
+              <CrawlerStatus :topic="form.topic" class="mt-2" />
             </div>
-
-            <!-- Tone Selection -->
-            <div class="card p-6">
-              <div class="flex items-center space-x-3 mb-4">
-                <div class="w-10 h-10 bg-hakkast-gradient rounded-xl flex items-center justify-center">
-                  <span class="text-white text-lg">🎭</span>
-                </div>
-                <div>
-                  <h3 class="font-semibold text-hakkast-navy">語調風格</h3>
-                  <p class="text-sm text-gray-500">選擇播客的呈現方式</p>
-                </div>
+            <!-- Tone & Duration -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-hakkast-navy mb-2">語調風格</label>
+                <select v-model="form.tone" class="input">
+                  <option v-for="option in toneOptions" :key="option.value" :value="option.value">
+                    {{ option.emoji }} {{ option.label }}
+                  </option>
+                </select>
               </div>
-              <div class="grid grid-cols-2 gap-3">
-                <label 
-                  v-for="option in toneOptions" 
-                  :key="option.value"
-                  class="flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all duration-200"
-                  :class="form.tone === option.value ? 'border-hakkast-purple bg-hakkast-purple/5' : 'border-gray-200 hover:border-hakkast-purple/30'"
-                >
-                  <input 
-                    type="radio" 
-                    v-model="form.tone" 
-                    :value="option.value"
-                    class="sr-only"
-                  />
-                  <div class="flex-1">
-                    <div class="flex items-center space-x-2 mb-1">
-                      <span class="text-lg">{{ option.emoji }}</span>
-                      <span class="font-medium text-gray-900">{{ option.label }}</span>
-                    </div>
-                    <p class="text-sm text-gray-500">{{ option.description }}</p>
-                  </div>
-                </label>
-              </div>
-            </div>
-
-            <!-- Duration & Language -->
-            <div class="grid md:grid-cols-2 gap-6">
-              <div class="card p-6">
-                <div class="flex items-center space-x-3 mb-4">
-                  <div class="w-10 h-10 bg-hakkast-gradient rounded-xl flex items-center justify-center">
-                    <span class="text-white text-lg">⏱️</span>
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-hakkast-navy">播客時長</h3>
-                    <p class="text-sm text-gray-500">選擇適合的長度</p>
-                  </div>
-                </div>
+              <div>
+                <label class="block text-sm font-medium text-hakkast-navy mb-2">播客時長</label>
                 <select v-model="form.duration" class="input">
                   <option :value="5">5分鐘 - 簡短介紹</option>
                   <option :value="10">10分鐘 - 標準長度</option>
@@ -96,49 +71,38 @@
                   <option :value="30">30分鐘 - 完整分析</option>
                 </select>
               </div>
-
-              <div class="card p-6">
-                <div class="flex items-center space-x-3 mb-4">
-                  <div class="w-10 h-10 bg-hakkast-gradient rounded-xl flex items-center justify-center">
-                    <span class="text-white text-lg">🌐</span>
-                  </div>
-                  <div>
-                    <h3 class="font-semibold text-hakkast-navy">語言組合</h3>
-                    <p class="text-sm text-gray-500">選擇語言模式</p>
-                  </div>
-                </div>
-                <select v-model="form.language" class="input">
-                  <option value="hakka">純客語</option>
-                  <option value="mixed">客華混合</option>
-                  <option value="bilingual">雙語模式</option>
-                </select>
-              </div>
             </div>
-
-            <!-- Personal Interests -->
-            <div class="card p-6">
-              <div class="flex items-center space-x-3 mb-4">
-                <div class="w-10 h-10 bg-hakkast-gradient rounded-xl flex items-center justify-center">
-                  <span class="text-white text-lg">❤️</span>
-                </div>
-                <div>
-                  <h3 class="font-semibold text-hakkast-navy">個人興趣 <span class="text-gray-400 font-normal">(選填)</span></h3>
-                  <p class="text-sm text-gray-500">讓AI更了解您的喜好，創造個人化內容</p>
-                </div>
-              </div>
-              <textarea
-                v-model="form.interests"
-                rows="4"
-                placeholder="分享您對客家文化的興趣點，例如：喜歡傳統音樂、對古建築有研究、熱愛客家料理..."
-                class="input resize-none"
-              ></textarea>
+            <!-- Language -->
+            <div>
+              <label class="block text-sm font-medium text-hakkast-navy mb-2">語言組合</label>
+              <select v-model="form.language" class="input">
+                <option value="hakka">純客語</option>
+                <option value="mixed">客華混合</option>
+                <option value="bilingual">雙語模式</option>
+              </select>
             </div>
-
+            <!-- Interests as Chips -->
+            <div>
+              <label class="block text-sm font-medium text-hakkast-navy mb-2">個人興趣 <span class="text-gray-400 font-normal">(可多選)</span></label>
+              <div class="flex flex-wrap gap-2 mb-2">
+                <span v-for="(interest, i) in form.interests" :key="interest" class="px-3 py-1 rounded-full bg-hakkast-gold/10 text-hakkast-navy flex items-center gap-1">
+                  {{ interest }}
+                  <button type="button" @click="removeInterest(i)" class="ml-1 text-hakkast-purple hover:text-red-500">×</button>
+                </span>
+              </div>
+              <input
+                v-model="interestInput"
+                @keydown.enter.prevent="addInterest"
+                type="text"
+                placeholder="輸入興趣並按 Enter..."
+                class="input"
+              />
+            </div>
             <!-- Generate Button -->
             <button
               type="submit"
               :disabled="isGenerating || !form.topic"
-              class="w-full btn btn-primary text-xl py-4 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full btn btn-primary text-xl py-4 disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               <span v-if="!isGenerating" class="flex items-center justify-center space-x-2">
                 <span>🚀</span>
@@ -150,96 +114,77 @@
             </button>
           </form>
         </div>
-
-        <!-- Preview/Result Section -->
-        <div class="space-y-6">
-          <!-- Process Steps -->
-          <div v-if="!generatedPodcast" class="card p-6">
-            <h3 class="text-xl font-semibold text-hakkast-navy mb-6">AI創作流程</h3>
-            <div class="space-y-4">
-              <div v-for="(step, index) in processSteps" :key="index" class="flex items-center space-x-4">
-                <div class="w-10 h-10 rounded-full flex items-center justify-center" 
-                     :class="step.completed ? 'bg-hakkast-gradient text-white' : 'bg-gray-100 text-gray-400'">
-                  <span>{{ index + 1 }}</span>
-                </div>
-                <div class="flex-1">
-                  <h4 class="font-medium" :class="step.completed ? 'text-hakkast-navy' : 'text-gray-400'">
-                    {{ step.title }}
-                  </h4>
-                  <p class="text-sm text-gray-500">{{ step.description }}</p>
-                </div>
-              </div>
+      </div>
+      <!-- Right: Result/Preview -->
+      <div class="flex-1 flex flex-col gap-8 w-full lg:w-1/2 mt-10 lg:mt-0">
+        <div v-if="generatedPodcast" class="bg-white rounded-2xl shadow-2xl p-8 animate-slide-up">
+          <div class="flex items-center gap-4 mb-6">
+            <div class="w-14 h-14 bg-hakkast-gradient rounded-xl flex items-center justify-center">
+              <span class="text-3xl">🎙️</span>
+            </div>
+            <div>
+              <h3 class="text-2xl font-bold text-hakkast-navy mb-1">{{ generatedPodcast?.title }}</h3>
+              <div class="text-gray-500 text-sm">AI播客 • {{ generatedPodcast?.duration || form.duration }}分鐘</div>
             </div>
           </div>
-
-          <!-- Generated Content -->
-          <div v-if="generatedPodcast" class="space-y-6 animate-slide-up">
-            <!-- Audio Player Card -->
-            <div class="card-gradient p-6 text-white">
-              <div class="flex items-center space-x-3 mb-4">
-                <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
-                  <span class="text-2xl">🎙️</span>
-                </div>
-                <div>
-                  <h3 class="text-xl font-semibold">{{ generatedPodcast?.title }}</h3>
-                  <p class="text-white/80">AI播客 • {{ generatedPodcast?.duration || form.duration }}分鐘</p>
-                </div>
-              </div>
-              
-              <div v-if="generatedPodcast?.audioUrl" class="mb-4">
-                <audio controls class="w-full">
-                  <source :src="generatedPodcast?.audioUrl" type="audio/wav">
-                  您的瀏覽器不支援音頻播放。
-                </audio>
-              </div>
-              
-              <div class="flex space-x-3">
-                <button class="btn btn-gold">
-                  <span class="mr-2">💾</span>
-                  儲存至庫存
-                </button>
-                <button class="btn btn-ghost">
-                  <span class="mr-2">📤</span>
-                  分享
-                </button>
-              </div>
+          <div v-if="generatedPodcast?.audioUrl" class="mb-4">
+            <audio controls class="w-full">
+              <source :src="generatedPodcast?.audioUrl" type="audio/wav">
+              您的瀏覽器不支援音頻播放。
+            </audio>
+          </div>
+          <div class="flex gap-2 mb-4">
+            <button class="btn btn-gold flex-1" @click="showToast('已儲存至庫存！')">
+              <span class="mr-2">💾</span> 儲存至庫存
+            </button>
+            <button class="btn btn-ghost flex-1" @click="showToast('分享連結已複製！')">
+              <span class="mr-2">📤</span> 分享
+            </button>
+          </div>
+          <!-- Tabs -->
+          <div class="mt-6">
+            <div class="flex space-x-4 border-b border-gray-200 mb-4">
+              <button
+                v-for="tab in contentTabs"
+                :key="tab.id"
+                @click="activeTab = tab.id"
+                :class="[
+                  'py-2 px-4 font-medium text-sm rounded-t-lg',
+                  activeTab === tab.id
+                    ? 'bg-hakkast-purple/10 border-b-2 border-hakkast-purple text-hakkast-purple shadow'
+                    : 'text-gray-500 hover:text-hakkast-purple'
+                ]"
+              >
+                <span class="mr-2">{{ tab.emoji }}</span>{{ tab.label }}
+              </button>
             </div>
-
-            <!-- Content Tabs -->
-            <div class="card overflow-hidden">
-              <div class="border-b border-gray-200">
-                <nav class="flex space-x-8 px-6">
-                  <button
-                    v-for="tab in contentTabs"
-                    :key="tab.id"
-                    @click="activeTab = tab.id"
-                    :class="[
-                      'py-4 px-1 border-b-2 font-medium text-sm transition-colors',
-                      activeTab === tab.id
-                        ? 'border-hakkast-purple text-hakkast-purple'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                    ]"
-                  >
-                    <span class="mr-2">{{ tab.emoji }}</span>
-                    {{ tab.label }}
-                  </button>
-                </nav>
+            <div class="p-2">
+              <div v-if="activeTab === 'hakka'" class="prose max-w-none">
+                <div class="whitespace-pre-wrap text-gray-700 leading-relaxed">{{ generatedPodcast?.hakkaContent }}</div>
               </div>
-              
-              <div class="p-6">
-                <div v-if="activeTab === 'hakka'" class="prose max-w-none">
-                  <div class="whitespace-pre-wrap text-gray-700 leading-relaxed">{{ generatedPodcast?.hakkaContent }}</div>
-                </div>
-                <div v-if="activeTab === 'chinese'" class="prose max-w-none">
-                  <div class="whitespace-pre-wrap text-gray-700 leading-relaxed">{{ generatedPodcast?.chineseContent }}</div>
-                </div>
-                <div v-if="activeTab === 'romanization' && generatedPodcast?.romanization" class="prose max-w-none">
-                  <div class="whitespace-pre-wrap text-gray-700 font-mono leading-relaxed">{{ generatedPodcast?.romanization }}</div>
-                </div>
+              <div v-if="activeTab === 'chinese'" class="prose max-w-none">
+                <div class="whitespace-pre-wrap text-gray-700 leading-relaxed">{{ generatedPodcast?.chineseContent }}</div>
+              </div>
+              <div v-if="activeTab === 'romanization' && generatedPodcast?.romanization" class="prose max-w-none">
+                <div class="whitespace-pre-wrap text-gray-700 font-mono leading-relaxed">{{ generatedPodcast?.romanization }}</div>
               </div>
             </div>
           </div>
         </div>
+        <div v-else class="flex flex-col items-center justify-center h-full min-h-[400px]">
+          <div class="w-24 h-24 bg-hakkast-gradient rounded-2xl flex items-center justify-center mb-6 shadow-xl">
+            <span class="text-5xl">✨</span>
+          </div>
+          <h3 class="text-2xl font-bold text-hakkast-navy mb-2">AI播客生成預覽</h3>
+          <p class="text-gray-500 mb-4">請填寫左側表單並點擊「開始生成播客」</p>
+        </div>
+        <!-- Toast -->
+        <transition name="fade">
+          <div v-if="toastMessage" class="fixed bottom-8 right-8 bg-hakkast-purple text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
+            <span>✅</span>
+            <span>{{ toastMessage }}</span>
+          </div>
+        </transition>
       </div>
     </div>
   </div>
@@ -249,6 +194,7 @@
 import { ref, reactive } from 'vue'
 import { usePodcastStore } from '../stores/podcast'
 import CrawlerStatus from '../components/CrawlerStatus.vue'
+import { motion } from 'motion-v'
 import type { Podcast, PodcastGenerationRequest } from '../types/podcast'
 
 const podcastStore = usePodcastStore()
@@ -257,13 +203,36 @@ const isGenerating = ref(false)
 const generatedPodcast = ref<Podcast | null>(null)
 const activeTab = ref('hakka')
 
+const hotTopics = [
+  '客家美食文化',
+  '遊戲最新消息',
+  '深度學習研究',
+  '科技新聞',
+  '客家音樂',
+  '節慶習俗',
+  '健康養生',
+  '財經動態',
+]
+
 const form = reactive({
   topic: '',
   tone: 'casual',
   duration: 10,
   language: 'mixed',
-  interests: ''
+  interests: [] as string[],
 })
+const interestInput = ref('')
+
+function addInterest() {
+  const val = interestInput.value.trim()
+  if (val && !form.interests.includes(val)) {
+    form.interests.push(val)
+  }
+  interestInput.value = ''
+}
+function removeInterest(idx: number) {
+  form.interests.splice(idx, 1)
+}
 
 const toneOptions = [
   {
@@ -322,32 +291,39 @@ const processSteps = ref([
   }
 ])
 
+const toastMessage = ref('')
+function showToast(msg: string) {
+  toastMessage.value = msg
+  setTimeout(() => { toastMessage.value = '' }, 2000)
+}
+
 const generatePodcast = async () => {
   isGenerating.value = true
   activeTab.value = 'hakka'
-  
+  toastMessage.value = ''
   // Reset process steps
   processSteps.value.forEach(step => step.completed = false)
-  
   try {
     // Simulate step progress
     processSteps.value[0].completed = true // Content crawling
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
     processSteps.value[1].completed = true // AI content generation
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
     processSteps.value[2].completed = true // Hakka translation
     await new Promise(resolve => setTimeout(resolve, 1000))
-    
     processSteps.value[3].completed = true // TTS synthesis
-    
-    const result = await podcastStore.generatePodcast(form as PodcastGenerationRequest)
+    const payload = {
+      ...form,
+      interests: form.interests.join(',')
+    }
+    const result = await podcastStore.generatePodcast(payload as PodcastGenerationRequest)
     generatedPodcast.value = result
+    showToast('播客生成成功！')
   } catch (error) {
     console.error('Failed to generate podcast:', error)
     // Reset steps on error
     processSteps.value.forEach(step => step.completed = false)
+    showToast('生成失敗，請稍後再試')
   } finally {
     isGenerating.value = false
   }

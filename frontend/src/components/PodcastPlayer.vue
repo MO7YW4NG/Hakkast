@@ -1,5 +1,5 @@
 <template>
-  <div v-if="podcast" class="card max-w-5xl mx-auto overflow-hidden">
+  <div v-if="podcast" v-motion="{ initial: { opacity: 0, y: 40 }, enter: { opacity: 1, y: 0 }, leave: { opacity: 0, y: 40 } }" class="card max-w-5xl mx-auto overflow-hidden">
     <!-- Header -->
     <div class="card-gradient p-8 text-white">
       <div class="flex items-start justify-between">

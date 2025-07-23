@@ -132,6 +132,7 @@
     <!-- Subscription Form Modal -->
     <div
       v-if="showSubscriptionForm"
+      v-motion="{ initial: { opacity: 0, scale: 0.95 }, enter: { opacity: 1, scale: 1 }, leave: { opacity: 0, scale: 0.95 } }"
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
     >
       <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
@@ -156,6 +157,7 @@
     <!-- Success Toast -->
     <div
       v-if="showSuccessToast"
+      v-motion="{ initial: { opacity: 0, y: 40 }, enter: { opacity: 1, y: 0 }, leave: { opacity: 0, y: 40 } }"
       class="fixed bottom-4 right-4 bg-green-600 text-white px-6 py-3 rounded-lg shadow-lg flex items-center space-x-2"
     >
       <span>✅</span>

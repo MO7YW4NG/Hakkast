@@ -1,5 +1,5 @@
 <template>
-  <div class="card max-w-2xl mx-auto">
+  <div class="card max-w-2xl mx-auto" v-motion="{ initial: { opacity: 0, scale: 0.95 }, enter: { opacity: 1, scale: 1 }, leave: { opacity: 0, scale: 0.95 } }">
     <div class="card-gradient p-8 text-white text-center">
       <div class="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
         <span class="text-3xl">📧</span>

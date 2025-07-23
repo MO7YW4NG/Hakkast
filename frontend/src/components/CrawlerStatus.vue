@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200">
+  <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200" v-motion="{ initial: { opacity: 0, y: 20 }, enter: { opacity: 1, y: 0 }, leave: { opacity: 0, y: 20 } }">
     <div class="flex items-start space-x-3">
       <div class="flex-shrink-0">
         <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
