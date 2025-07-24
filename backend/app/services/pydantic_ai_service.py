@@ -126,6 +126,16 @@ class PydanticAIService:
             請用繁體中文，濃縮新聞重點，字數約500字。
             """
         )
+        
+        # 創建對話 Agent
+        self.dialogue_agent = Agent(
+            model=self.model,
+            result_type=str,
+            system_prompt="""
+            你是專業播客主持人，請根據上下文和新聞摘要，產生一段自然、深入的對話回應。
+            請用繁體中文，風格專業且有深度。
+            """
+        )
 
     async def analyze_content_requirements(self, topic: str, tone: str = "casual") -> ContentAnalysis:
         """分析內容需求和受眾"""
@@ -136,7 +146,6 @@ class PydanticAIService:
             return result.data
         except Exception as e:
             print(f"Content analysis error: {e}")
-            # 返回預設分析結果
             return ContentAnalysis(
                 topic_category="通用",
                 complexity_level="intermediate",
@@ -188,7 +197,6 @@ class PydanticAIService:
             return result.data
         except Exception as e:
             print(f"Script generation error: {e}")
-            # 返回備用腳本
             return self._create_fallback_script(request)
 
     async def generate_complete_podcast_content(
@@ -208,11 +216,11 @@ class PydanticAIService:
                     summary = await self.summarize_article(content.content or content.summary)
                     summaries.append(f"標題：{content.title}\n摘要：{summary}\n來源：{content.url}")
 
-            # Step 2: 合併摘要，丟給 LLM 產生播客腳本
+            # Step 2: 合併摘要並由LLM產生腳本
             combined_summary = "\n\n".join(summaries)
             podcast_prompt = (
                 "請根據以下三篇新聞的重點摘要，逐一分析並串接，"
-                "生成一份約2500字、15分鐘的雙主持人播客腳本。"
+                "生成一份約2200~2500字、15分鐘的雙主持人播客腳本。"
                 "內容必須涵蓋三篇新聞的重點，且不要虛構：\n"
                 f"{combined_summary}"
             )
@@ -328,6 +336,11 @@ class PydanticAIService:
         """分段生成播客腳本片段"""
         result = await self.script_generator.run(segment_prompt)
         return str(result.data.full_dialogue) if hasattr(result.data, "full_dialogue") else str(result.data)
+
+    async def generate_reply(self, prompt: str) -> str:
+        """生成對話回應"""
+        result = await self.dialogue_agent.run(prompt)
+        return str(result.data)
 
 
 # 使用範例和測試函數

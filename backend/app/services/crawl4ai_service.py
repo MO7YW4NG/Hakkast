@@ -17,7 +17,7 @@ def clean_markdown(md: str) -> str:
 
 def extract_fallback_content(url: str) -> str:
     try:
-        res = requests.get(url, timeout=10)
+        res = requests.get(url, timeout=20)
         soup = BeautifulSoup(res.text, "html.parser")
         article = soup.select_one("div.td-post-content")
         if article:
@@ -54,7 +54,7 @@ async def crawl_news(topic: str, max_articles: int = 5):
     ...
     if topic == "research_deep_learning":
         try:
-            response = requests.get(_list_page_url_for_topic(topic), timeout=10)
+            response = requests.get(_list_page_url_for_topic(topic), timeout=20)
             json_data = response.json()
 
             papers = json_data.get("data", {}).get("trending_papers", [])

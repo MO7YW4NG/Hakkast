@@ -18,7 +18,7 @@ from app.core.config import settings
 
 def print_config():
     """顯示當前配置"""
-    print("🔧 當前配置:")
+    print("當前配置:")
     print(f"  TWCC_API_KEY: {'已設定' if settings.TWCC_API_KEY else '未設定'}")
     print(f"  TWCC_BASE_URL: {settings.TWCC_BASE_URL}")
     print(f"  TWCC_MODEL_NAME: {settings.TWCC_MODEL_NAME}")
@@ -28,7 +28,7 @@ def print_config():
 async def main():
     """主測試函數"""
     print("=" * 60)
-    print("🧪 TWCC AFS Pydantic AI 測試")
+    print("TWCC AFS Pydantic AI 測試")
     print("=" * 60)
     
     print_config()
