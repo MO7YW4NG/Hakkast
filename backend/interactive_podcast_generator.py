@@ -9,6 +9,7 @@ from app.services.crawl4ai_service import crawl_news
 from app.services.pydantic_ai_service import PydanticAIService
 from app.models.podcast import PodcastGenerationRequest
 from agents import generate_podcast_script_with_agents
+import json
 
 TOPIC_OPTIONS = {
     "1": {
@@ -114,31 +115,23 @@ async def interactive_podcast_generator():
         # 產生腳本
         podcast_script = await generate_podcast_script_with_agents(crawled_articles, max_minutes=25)
         print("\n腳本生成完成")
-        print(f"腳本字數：{len(podcast_script)}")
+        
+        # <<<<<<<<<<< 新增這段，清楚印出 dict 結構 >>>>>>>>>>
+        print("\n[PodcastScript 結構化 dict 輸出]")
+        print(json.dumps(podcast_script, ensure_ascii=False, indent=2))
+        # <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+        print(f"腳本字數：{len(podcast_script['content'])}")
         print("\n完整播客腳本：\n")
-        print(podcast_script)
+        print(podcast_script['content'])
         
         # 儲存腳本
         save_choice = input("是否要保存腳本到文件？(y/N): ").strip().lower()
         
         if save_choice in ['y', 'yes', '是']:
-            filename = f"podcast_script_{topic_key}_{len(crawled_articles)}articles.txt"
-            
+            filename = f"podcast_script_{topic_key}_{len(crawled_articles)}articles.json"
             with open(filename, 'w', encoding='utf-8') as f:
-                f.write(f"Hakkast 播客腳本\n")
-                f.write(f"="*50 + "\n\n")
-                f.write(f"主題: {selected_topic['name']}\n")
-                f.write(f"文章數量: {len(crawled_articles)}\n")
-                f.write(f"\n" + "="*50 + "\n")
-                f.write(f"完整對話內容:\n\n")
-                f.write(podcast_script)
-                f.write(f"\n\n" + "="*50 + "\n")
-                f.write(f"使用的文章來源:\n")
-                for i, article in enumerate(crawled_articles, 1):
-                    f.write(f"{i}. {article.title}\n")
-                    f.write(f"   來源: {article.url}\n")
-                    f.write(f"   發布: {article.published_at.strftime('%Y-%m-%d')}\n\n")
-            
+                json.dump(podcast_script, f, ensure_ascii=False, indent=2)
             print(f"腳本已保存至: {filename}")
         
 

@@ -1,4 +1,6 @@
 from app.services.pydantic_ai_service import PydanticAIService
+from app.models.podcast import PodcastScript
+from pydantic import BaseModel
 
 CONTEXT_WINDOW_TOKENS = 32000
 
@@ -79,13 +81,15 @@ async def generate_podcast_script_with_agents(articles, max_minutes=25):
             f"{article.content or article.summary}"
         )
         brief = await ai_service.generate_reply(summary_prompt)
-        intro = f"主持人A: {brief.strip()}"
+        # 限制摘要最多四句
+        sentences = brief.strip().split("。")
+        intro = f"主持人A: {'。'.join(sentences[:5]).strip()}"
         dialogue.append(intro)
 
         for round in range(30):
             is_last_turn = (article_chars + 100 > per_article_chars * 0.95)
             if article_chars > per_article_chars * 0.95 or total_chars > max_chars * 0.95:
-                break  # 只 break，不插入結尾語
+                break  
             if turn % 2 == 0:
                 reply = await host_a.reply(dialogue, articles, idx, turn, is_last_turn)
             else:
@@ -137,7 +141,6 @@ async def generate_podcast_script_with_agents(articles, max_minutes=25):
                 speaker = None
 
             if speaker and speaker == last_speaker:
-                # 合併到上一句
                 buffer += " " + line[len(speaker)+1:].strip()
             else:
                 if buffer:
@@ -148,6 +151,19 @@ async def generate_podcast_script_with_agents(articles, max_minutes=25):
             merged.append(buffer)
         return merged
 
+    # 合併同主持人發言，並在不同主持人時換行
     merged_lines = merge_same_speaker_lines(dialogue)
-    final_script = "\n\n".join(merged_lines)
-    return final_script
+    # 轉成結構化陣列
+    content = []
+    for line in merged_lines:
+        if line.startswith("主持人A:"):
+            content.append({"speaker": "主持人A", "text": line[len("主持人A:"):].strip()})
+        elif line.startswith("主持人B:"):
+            content.append({"speaker": "主持人B", "text": line[len("主持人B:"):].strip()})
+    podcast_script_dict = {
+        "title": "Hakkast 哈客播新聞討論",
+        "hosts": ["主持人A", "主持人B"],
+        "content": content
+    }
+    print(f"腳本字數：{sum(len(c['text']) for c in content)}")
+    return podcast_script_dict

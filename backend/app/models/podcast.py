@@ -43,3 +43,8 @@ class PodcastResponse(BaseModel):
     createdAt: str
     audioUrl: Optional[str] = None
     audioDuration: Optional[int] = None
+
+class PodcastScript(BaseModel):
+    title: str
+    hosts: list[str]
+    content: str

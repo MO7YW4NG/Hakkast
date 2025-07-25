@@ -16,12 +16,11 @@ from app.models.podcast import PodcastGenerationRequest
 from app.models.crawler import CrawledContent
 
 
-# 定義結構化的回應模型
+# 結構化的回應模型
 class PodcastScript(BaseModel):
-    """播客腳本結構化模型"""
     title: str
-    hosts: List[str]  # 主持人名單
-    full_dialogue: str  # 完整的對話腳本
+    hosts: List[str]  
+    full_dialogue: str  
     estimated_duration_minutes: int
     key_points: List[str]
     sources_mentioned: List[str]
@@ -37,24 +36,22 @@ class ContentAnalysis(BaseModel):
 
 
 class PydanticAIService:
-    """使用 Pydantic AI 的新 AI 服務，支援 TWCC AFS 和 Gemini 模型"""
+    """使用 Pydantic AI ( TWCC AFS 和 Gemini )"""
  
     def __init__(self, use_twcc: bool = True):
         self.use_twcc = use_twcc
         
         if use_twcc and settings.TWCC_API_KEY and settings.TWCC_BASE_URL:
-            # 使用 TWCC AFS 模型
-            print("使用 TWCC AFS 模型...")
-            # 設定環境變數供 OpenAI 客戶端使用
+            # TWCC AFS 
+            print("使用 TWCC AFS ...")
             os.environ["OPENAI_API_KEY"] = settings.TWCC_API_KEY
             os.environ["OPENAI_BASE_URL"] = settings.TWCC_BASE_URL
             self.model = OpenAIModel(settings.TWCC_MODEL_NAME)
         elif settings.GEMINI_API_KEY:
-            # 使用 Gemini 模型作為備選
+            # Gemini 
             print("使用 Gemini 模型...")
-            # 設定環境變數供 Gemini 客戶端使用
             os.environ["GEMINI_API_KEY"] = settings.GEMINI_API_KEY
-            self.model = GeminiModel('gemini-1.5-flash')
+            self.model = GeminiModel('gemini-2.5-flash')
             self.use_twcc = False
         else:
             raise ValueError("需要設定 TWCC_API_KEY + TWCC_BASE_URL 或 GEMINI_API_KEY")
@@ -183,7 +180,7 @@ class PydanticAIService:
         - 內容時效性：{content_analysis.content_freshness}
         """
         
-        # 如果有爬取的內容，加入參考資料
+        # 加入參考資料
         if crawled_content:
             context_info += "\n\n參考資料：\n"
             for content in crawled_content[:3]:  
@@ -209,7 +206,7 @@ class PydanticAIService:
             print("正在分析內容需求...")
             content_analysis = await self.analyze_content_requirements(request.topic, request.tone)
 
-            # Step 1: 逐篇摘要
+            # 逐篇摘要
             summaries = []
             if crawled_content:
                 for content in crawled_content[:3]:
@@ -224,10 +221,10 @@ class PydanticAIService:
                 "內容必須涵蓋三篇新聞的重點，且不要虛構：\n"
                 f"{combined_summary}"
             )
-            # 用腳本生成 agent 產生播客腳本
+            # 用腳本生成 agent 產生腳本
             script = await self.script_generator.run(podcast_prompt)
 
-            # Step 2: 分段生成
+            # 分段生成
             segments = []
 
             # 開場
@@ -256,14 +253,14 @@ class PydanticAIService:
             closing = await self.generate_podcast_script_segment(closing_prompt)
             segments.append(closing)
 
-            # 合併所有段落
+            # 合併段落
             full_script = "\n\n".join(segments)
 
-            # Step 3: 組合完整內容（對話式腳本）
+            # 完整內容（對話腳本）
             full_content = f"""
-            🎙️Podcast 標題：{script.title}
+            Podcast 標題：{script.title}
 
-            🎧主持人：{' 與 '.join(script.hosts)}
+            主持人：{' 與 '.join(script.hosts)}
 
             {script.full_dialogue}
             """
@@ -301,19 +298,19 @@ class PydanticAIService:
     def _create_fallback_script(self, request: PodcastGenerationRequest) -> PodcastScript:
         """創建備用腳本"""
         fallback_dialogue = f"""
-        🎙️主持人A：
+        主持人A：
         歡迎收聽今天的播客節目，我是主持人A。
 
-        🎙️主持人B：
+        主持人B：
         我是主持人B。今天我們要聊的主題是{request.topic}。
 
-        🎙️主持人A：
+        主持人A：
         這確實是一個很有趣的話題，讓我們來深入討論一下。
 
-        🎙️主持人B：
+        主持人B：
         沒錯，這個議題值得我們從多個角度來分析。
 
-        🎙️主持人A：
+        主持人A：
         感謝大家今天的收聽，我們下次再見！
         """
         
@@ -337,10 +334,16 @@ class PydanticAIService:
         result = await self.script_generator.run(segment_prompt)
         return str(result.data.full_dialogue) if hasattr(result.data, "full_dialogue") else str(result.data)
 
-    async def generate_reply(self, prompt: str) -> str:
+    async def generate_reply(self, prompt: str, output_type=None) -> str:
         """生成對話回應"""
-        result = await self.dialogue_agent.run(prompt)
-        return str(result.data)
+        if output_type:
+            agent = Agent(model=self.model, output_type=output_type)
+            result = await agent.run(prompt)
+            return result.output
+        else:
+            # default:dialogue_agent
+            result = await self.dialogue_agent.run(prompt)
+            return result.data
 
 
 # 使用範例和測試函數
@@ -407,7 +410,7 @@ class PydanticAIService:
             )
             
             result = await service.generate_complete_podcast_content(test_request)
-            print(f"✅ {model_name} 測試成功")
+            print(f"{model_name} 測試成功")
             
             # 恢復原設定
             settings.TWCC_MODEL_NAME = original_model
@@ -417,7 +420,7 @@ class PydanticAIService:
             continue"""
 
 if __name__ == "__main__":
-    # 執行測試 - 您可以選擇要執行哪個測試
+    # 執行測試 
     import sys
     
     if len(sys.argv) > 1 and sys.argv[1] == "custom":
