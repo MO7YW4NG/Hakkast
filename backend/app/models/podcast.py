@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional, Literal
+from typing import Optional, Literal, List
 from datetime import datetime
 import uuid
 
@@ -44,7 +44,17 @@ class PodcastResponse(BaseModel):
     audioUrl: Optional[str] = None
     audioDuration: Optional[int] = None
 
+#class PodcastScript(BaseModel):
+#   title: str
+#   hosts: list[str]
+#    content: str
+class PodcastScriptContent(BaseModel):
+    speaker: str
+    text: str
+    hakka_text: Optional[str] = None
+    romanization: Optional[str] = None
+
 class PodcastScript(BaseModel):
     title: str
-    hosts: list[str]
-    content: str
+    hosts: List[str]
+    content: List[PodcastScriptContent]

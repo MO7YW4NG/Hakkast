@@ -1,6 +1,5 @@
 from app.services.pydantic_ai_service import PydanticAIService
-from app.models.podcast import PodcastScript
-from pydantic import BaseModel
+from app.models.podcast import PodcastScript, PodcastScriptContent
 
 CONTEXT_WINDOW_TOKENS = 32000
 
@@ -157,13 +156,13 @@ async def generate_podcast_script_with_agents(articles, max_minutes=25):
     content = []
     for line in merged_lines:
         if line.startswith("主持人A:"):
-            content.append({"speaker": "主持人A", "text": line[len("主持人A:"):].strip()})
+            content.append(PodcastScriptContent(speaker="主持人A", text=line[len("主持人A:"):].strip()))
         elif line.startswith("主持人B:"):
-            content.append({"speaker": "主持人B", "text": line[len("主持人B:"):].strip()})
-    podcast_script_dict = {
-        "title": "Hakkast 哈客播新聞討論",
-        "hosts": ["主持人A", "主持人B"],
-        "content": content
-    }
-    print(f"腳本字數：{sum(len(c['text']) for c in content)}")
-    return podcast_script_dict
+            content.append(PodcastScriptContent(speaker="主持人B", text=line[len("主持人B:"):].strip()))
+    podcast_script = PodcastScript(
+        title="Hakkast 哈客播新聞討論",
+        hosts=["主持人A", "主持人B"],
+        content=content
+    )
+    print(f"腳本字數：{sum(len(c.text) for c in content)}")
+    return podcast_script
