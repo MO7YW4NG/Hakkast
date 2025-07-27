@@ -93,6 +93,8 @@ async def interactive_podcast_generator():
             print(f"來源: {article.source}")
             print(f"發佈日期: {article.published_at.strftime('%Y-%m-%d')}")
             print(f"摘要: {article.summary[:100]}...")
+            print(f"授權網址: {getattr(article, 'license_url', '')}")
+            print(f"授權類型: {getattr(article, 'license_type', '')}")
             print()
         
         # 確認是否繼續生成腳本

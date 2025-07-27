@@ -41,6 +41,9 @@ class CrawledContent(BaseModel):
     topic: str
     keywords: List[str]
     relevance_score: float = 0.0
+    #cc
+    license_url: str = ""
+    license_type: str = ""
 
 class CrawlerResult(BaseModel):
     topic: str
