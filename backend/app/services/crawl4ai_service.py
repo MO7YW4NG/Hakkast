@@ -90,24 +90,12 @@ def fetch_arxiv_html_content(arxiv_id: str) -> str:
         return ""
 
 def get_arxiv_html_url(arxiv_id: str) -> str:
-    """取得 arXiv 論文的 HTML link"""
-    url = f"https://arxiv.org/abs/{arxiv_id}"
-    try:
-        res = requests.get(url, timeout=10)
-        soup = BeautifulSoup(res.text, "html.parser")
-        html_link = soup.select_one('a#latexml-download-link')
-        if html_link and html_link.get('href', '').startswith('https://arxiv.org/html/'):
-            return html_link['href']
-    except Exception as e:
-        print(f"抓 arXiv HTML 連結失敗：{e}")
-    return ""
+    """回傳 arXiv HTML 全文網址"""
+    return f"https://arxiv.org/html/{arxiv_id}"
 
 def fetch_arxiv_full_html(arxiv_id: str) -> str:
-    """抓 arXiv HTML全文"""
+    """抓 arXiv HTML 全文"""
     html_url = get_arxiv_html_url(arxiv_id)
-    if not html_url:
-        print("找不到 HTML 連結")
-        return ""
     try:
         res = requests.get(html_url, timeout=15)
         res.encoding = "utf-8"
