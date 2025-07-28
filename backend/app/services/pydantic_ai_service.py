@@ -54,7 +54,7 @@ class PydanticAIService:
             print("使用 Gemini 模型...")
             # 設定環境變數供 Gemini 客戶端使用
             os.environ["GEMINI_API_KEY"] = settings.GEMINI_API_KEY
-            self.model = GeminiModel('gemini-1.5-flash')
+            self.model = GeminiModel('gemini-2.5-flash')
             self.use_twcc = False
         else:
             raise ValueError("需要設定 TWCC_API_KEY + TWCC_BASE_URL 或 GEMINI_API_KEY")

@@ -1,0 +1,72 @@
+[
+  {
+    "speaker": "主持人",
+    "original_text": "歡迎收聽今天的科技播客，我是主持人小陳。",
+    "hakka_text": "歡迎收聽今晡日个科技播客，𠊎係主持人細陳。",
+    "romanization": "歡 迎 收 tiang¹ gin¹ pu¹ ngit⁸ ge⁵ 科 技 播 客 ， ngai² he⁵ zu² cii² ngin² se⁵ 陳 。",
+    "estimated_duration": 10.5
+  },
+  {
+    "speaker": "主持人",
+    "original_text": "今天我們要討論人工智慧在醫療領域的最新發展。",
+    "hakka_text": "今晡日𠊎等愛討論人工智慧在醫療領域个最新發展。",
+    "romanization": "gin¹ pu¹ ngit⁸ ngai² den² oi⁵ 討 論 ngin² gung¹ 智 慧 cai⁶ yi¹ 療 領 域 ge⁵ zui⁵ xin¹ 發 展 。",
+    "estimated_duration": 11.5
+  },
+  {
+    "speaker": "來賓",
+    "original_text": "謝謝邀請。AI確實正在改變醫療行業的面貌。",
+    "hakka_text": "謝邀請。AI 確實正在改變醫療行業个面貌。",
+    "romanization": "謝 邀 請 。 A I   確 實 zang⁵ cai⁶ 改 變 yi¹ 療 行 業 ge⁵ mien⁶ 貌 。",
+    "estimated_duration": 10.5
+  },
+  {
+    "speaker": "主持人",
+    "original_text": "能不能跟我們分享一些具體的應用例子？",
+    "hakka_text": "做得同𠊎等分享一息具體个應用例仔無？",
+    "romanization": "zo⁵ det⁷ 同 ngai² den² pun¹ 享 yit⁷ 息 具 ti² ge⁵ 應 用 例 仔 mo² ？",
+    "estimated_duration": 9.0
+  },
+  {
+    "speaker": "來賓",
+    "original_text": "當然可以。比如說，AI現在可以協助醫師診斷疾病，提高準確率。",
+    "hakka_text": "當然做得啊。比論講，AI 這下做得協助醫師診斷疾病，提高準確率。",
+    "romanization": "dong¹ 然 zo⁵ det⁷ a¹ 。 pi² 論 gong² ， A I   lia² ha⁶ zo⁵ det⁷ 協 助 yi¹ sii¹ 診 斷 疾 piang⁶ ， 提 go¹ 準 確 率 。",
+    "estimated_duration": 16.0
+  },
+  {
+    "speaker": "主持人",
+    "original_text": "這聽起來很厲害！那麼病患的隱私保護呢？",
+    "hakka_text": "這聽起來當厲害唷！該恁呢病人个隱私保護呢？",
+    "romanization": "lia² tiang¹ ki² loi² dong¹ 厲 害 唷 ！ gai⁵ 恁 ne¹ piang⁶ ngin² ge⁵ 隱 私 保 fu⁶ ne¹ ？",
+    "estimated_duration": 10.5
+  },
+  {
+    "speaker": "來賓",
+    "original_text": "這是一個很重要的問題。我們必須確保數據安全和患者隱私。",
+    "hakka_text": "這係一個當重要个問題。𠊎兜定著愛確保數據安全同病人个隱私。",
+    "romanization": "lia² he⁵ yit⁷ ge⁵ dong¹ 重 oi⁵ ge⁵ 問 題 。 ngai² 兜 定 to² oi⁵ 確 保 數 據 安 全 同 piang⁶ ngin² ge⁵ 隱 私 。",
+    "estimated_duration": 14.5
+  },
+  {
+    "speaker": "主持人",
+    "original_text": "未來AI醫療技術還會有什麼新的發展？",
+    "hakka_text": "未來 AI 醫療技術還會有麼个新个發展？",
+    "romanization": "vi⁶ loi²   A I   yi¹ 療 技 術 han² 會 yu² ma¹ ge⁵ xin¹ ge⁵ 發 展 ？",
+    "estimated_duration": 10.0
+  },
+  {
+    "speaker": "來賓",
+    "original_text": "我認為個人化醫療將會是下一個重要趨勢。",
+    "hakka_text": "𠊎試著個人化醫療會係下二隻重要个情形。",
+    "romanization": "ngai² 試 to² ge⁵ ngin² 化 yi¹ 療 會 he⁵ ha⁶ ngi⁶ 隻 重 oi⁵ ge⁵ 情 形 。",
+    "estimated_duration": 9.5
+  },
+  {
+    "speaker": "主持人",
+    "original_text": "非常感謝您今天的分享，我們下次節目再見！",
+    "hakka_text": "非常感謝你今晡日个分享，𫣆下二到節目正來尞！",
+    "romanization": "fui¹ song² 感 謝 ngi² gin¹ pu¹ ngit⁸ ge⁵ pun¹ 享 ， 𫣆 ha⁶ ngi⁶ 到 節 mug⁸ zang⁵ loi² liau² ！",
+    "estimated_duration": 11.0
+  }
+]
