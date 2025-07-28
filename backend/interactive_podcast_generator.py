@@ -6,9 +6,11 @@ Hakkast 互動式播客生成系统
 
 import asyncio
 from app.services.crawl4ai_service import crawl_news
-from app.services.pydantic_ai_service import PydanticAIService
-from app.models.podcast import PodcastGenerationRequest
-from agents import generate_podcast_script_with_agents
+#from app.services.pydantic_ai_service import PydanticAIService
+#from app.models.podcast import PodcastGenerationRequest
+from app.services.agents import generate_podcast_script_with_agents
+import json
+from app.services.translation_service import TranslationService
 
 TOPIC_OPTIONS = {
     "1": {
@@ -39,8 +41,8 @@ async def interactive_podcast_generator():
     print("請選擇你想要的主題：")
     print()
     for key, value in TOPIC_OPTIONS.items():
-        print(f"   {key}. {value['name']}")
-        print(f"      {value['description']}")
+        print(f"{key}. {value['name']}")
+        print(f"{value['description']}")
         print()
     
     # user選擇主題
@@ -91,9 +93,11 @@ async def interactive_podcast_generator():
             print(f"來源: {article.source}")
             print(f"發佈日期: {article.published_at.strftime('%Y-%m-%d')}")
             print(f"摘要: {article.summary[:100]}...")
+            print(f"授權網址: {getattr(article, 'license_url', '')}")
+            print(f"授權類型: {getattr(article, 'license_type', '')}")
             print()
         
-        # 確認是否繼續生成播客
+        # 確認是否繼續生成腳本
         continue_choice = input("是否要繼續生成腳本？(y/N): ").strip().lower()
         
         if continue_choice not in ['y', 'yes', '是']:
@@ -105,7 +109,7 @@ async def interactive_podcast_generator():
         # 使用第一篇文章的標題為主標題
         main_title = crawled_articles[0].title
         
-        # 合併所有文章內容
+        # 合併文章內容
         combined_content = "\n\n".join([
             f"標題: {article.title}\n內容: {article.content or article.summary}\n來源: {article.url}"
             for article in crawled_articles
@@ -114,41 +118,58 @@ async def interactive_podcast_generator():
         # 產生腳本
         podcast_script = await generate_podcast_script_with_agents(crawled_articles, max_minutes=25)
         print("\n腳本生成完成")
-        print(f"腳本字數：{len(podcast_script)}")
+        print("進行客語翻譯...")
+        podcast_script = await add_hakka_translation_to_script(podcast_script, mode="hakka_zh_hk")  # 四縣腔
+        print("翻譯完成")
+        print(podcast_script.model_dump_json(indent=2))
+       
+        print(f"腳本字數：{len(podcast_script.content)}")
         print("\n完整播客腳本：\n")
-        print(podcast_script)
-        
+        for item in podcast_script.content:
+            print(f"{item.speaker}: {item.text} -> {item.hakka_text}")
+
         # 儲存腳本
         save_choice = input("是否要保存腳本到文件？(y/N): ").strip().lower()
         
         if save_choice in ['y', 'yes', '是']:
-            filename = f"podcast_script_{topic_key}_{len(crawled_articles)}articles.txt"
-            
+            filename = f"podcast_script_{topic_key}_{len(crawled_articles)}articles.json"
             with open(filename, 'w', encoding='utf-8') as f:
-                f.write(f"Hakkast 播客腳本\n")
-                f.write(f"="*50 + "\n\n")
-                f.write(f"主題: {selected_topic['name']}\n")
-                f.write(f"文章數量: {len(crawled_articles)}\n")
-                f.write(f"\n" + "="*50 + "\n")
-                f.write(f"完整對話內容:\n\n")
-                f.write(podcast_script)
-                f.write(f"\n\n" + "="*50 + "\n")
-                f.write(f"使用的文章來源:\n")
-                for i, article in enumerate(crawled_articles, 1):
-                    f.write(f"{i}. {article.title}\n")
-                    f.write(f"   來源: {article.url}\n")
-                    f.write(f"   發布: {article.published_at.strftime('%Y-%m-%d')}\n\n")
-            
+                f.write(podcast_script.model_dump_json(indent=2))
             print(f"腳本已保存至: {filename}")
         
-
         print("bye")
-
-        
+     
     except Exception as e:
         print(f"發生錯誤: {str(e)}")
         import traceback
         traceback.print_exc()
+
+async def add_hakka_translation_to_script(podcast_script, mode="hakka_zh_hk"):
+    """
+    將 content 裡每段 text 翻譯成客語漢字（四縣腔/海陸腔）
+    mode: "hakka_zh_hk"（四縣腔）或 "hakka_hailu_zh_hk"（海陸腔）
+    """
+    service = TranslationService()
+    # mode 決定 endpoint
+    endpoint = "/MT/translate/hakka_zh_hk" if mode == "hakka_zh_hk" else "/MT/translate/hakka_hailu_zh_hk"
+    for item in podcast_script.content:  
+        payload = {"input": item.text}   
+        # 已登入
+        if not service.headers:
+            await service.login()
+        # 呼叫 API
+        resp = await service.client.post(
+            service.base_url + endpoint,
+            headers=service.headers,
+            json=payload
+        )
+        if resp.status_code == 200:
+            result = resp.json()
+            item.hakka_text = result.get("output", "")
+        else:
+            item.hakka_text = "" 
+    await service.close()
+    return podcast_script
 
 def main():
     try:
