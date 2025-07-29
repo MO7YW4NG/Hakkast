@@ -132,10 +132,16 @@ async def interactive_podcast_generator():
         save_choice = input("是否要保存腳本到文件？(y/N): ").strip().lower()
         
         if save_choice in ['y', 'yes', '是']:
+            import os
+            # 確保 json 資料夾存在
+            json_dir = "json"
+            os.makedirs(json_dir, exist_ok=True)
+            
             filename = f"podcast_script_{topic_key}_{len(crawled_articles)}articles.json"
-            with open(filename, 'w', encoding='utf-8') as f:
+            filepath = os.path.join(json_dir, filename)
+            with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(podcast_script.model_dump_json(indent=2))
-            print(f"腳本已保存至: {filename}")
+            print(f"腳本已保存至: {filepath}")
         
         print("bye")
      
