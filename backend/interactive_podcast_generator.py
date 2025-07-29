@@ -152,18 +152,14 @@ async def interactive_podcast_generator():
 
 async def add_hakka_translation_to_script(podcast_script, mode="hakka_zh_hk"):
     """
-    將 content 裡每段 text 翻譯成客語漢字（四縣腔/海陸腔）
-    mode: "hakka_zh_hk"（四縣腔）或 "hakka_hailu_zh_hk"（海陸腔）
+    將 content 裡每段 text 翻譯成客語漢字（四縣腔/海陸腔），並產生羅馬拼音
     """
     service = TranslationService()
-    # mode 決定 endpoint
     endpoint = "/MT/translate/hakka_zh_hk" if mode == "hakka_zh_hk" else "/MT/translate/hakka_hailu_zh_hk"
     for item in podcast_script.content:  
         payload = {"input": item.text}   
-        # 已登入
         if not service.headers:
             await service.login()
-        # 呼叫 API
         resp = await service.client.post(
             service.base_url + endpoint,
             headers=service.headers,
@@ -172,8 +168,32 @@ async def add_hakka_translation_to_script(podcast_script, mode="hakka_zh_hk"):
         if resp.status_code == 200:
             result = resp.json()
             item.hakka_text = result.get("output", "")
+
+            # 呼叫數字調拼音API
+            py_resp = await service.client.post(
+                service.base_url + "/MT/translate/hakka_hk_py",
+                headers=service.headers,
+                json={"input": item.hakka_text}
+            )
+            if py_resp.status_code == 200:
+                item.romanization = py_resp.json().get("output", "")
+            else:
+                item.romanization = service._generate_romanization(item.hakka_text) if item.hakka_text else ""
+
+            # 呼叫調型符號拼音API
+            tone_resp = await service.client.post(
+                service.base_url + "/MT/translate/hakka_hk_py_tone",
+                headers=service.headers,
+                json={"input": item.hakka_text}
+            )
+            if tone_resp.status_code == 200:
+                item.romanization_tone = tone_resp.json().get("output", "")
+            else:
+                item.romanization_tone = service._generate_tone_symbol_romanization(item.hakka_text) if item.hakka_text else ""
         else:
             item.hakka_text = "" 
+            item.romanization = ""
+            item.romanization_tone = ""
     await service.close()
     return podcast_script
 

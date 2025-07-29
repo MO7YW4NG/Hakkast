@@ -56,7 +56,7 @@ class HostAgent:
 
 async def generate_podcast_script_with_agents(articles, max_minutes=25):
     ai_service = PydanticAIService()
-    host_a = HostAgent("佳芸", "理性、專業、分析", ai_service)
+    host_a = HostAgent("佳昀", "理性、專業、分析", ai_service)
     host_b = HostAgent("敏權", "幽默、活潑、互動", ai_service)
     dialogue = []
     total_chars = 0
@@ -65,9 +65,9 @@ async def generate_podcast_script_with_agents(articles, max_minutes=25):
     turn = 0
 
     # 開場
-    dialogue.append("佳芸: 大家好，我是佳芸。")
+    dialogue.append("佳昀: 大家好，我是佳昀。")
     dialogue.append("敏權: 我是敏權，歡迎收聽Hakkast 哈客播。")
-    dialogue.append("佳芸: 今天我們為大家帶來三則重要新聞，讓我們一起看看！")
+    dialogue.append("佳昀: 今天我們為大家帶來三則重要新聞，讓我們一起看看！")
 
     for idx, article in enumerate(articles):
         article_chars = 0
@@ -82,7 +82,7 @@ async def generate_podcast_script_with_agents(articles, max_minutes=25):
         brief = await ai_service.generate_reply(summary_prompt)
         # 限制摘要最多四句
         sentences = brief.strip().split("。")
-        intro = f"佳芸: {'。'.join(sentences[:5]).strip()}"
+        intro = f"佳昀: {'。'.join(sentences[:5]).strip()}"
         dialogue.append(intro)
 
         for round in range(30):
@@ -102,7 +102,7 @@ async def generate_podcast_script_with_agents(articles, max_minutes=25):
     news_list = "\n".join([f"{i+1}. {(a.summary or a.content)[:60]}" for i, a in enumerate(articles)])
 
     summary_prompt_a = (
-        f"請你以佳芸的身分，針對今天討論的三則新聞做一個重點總結。\n"
+        f"請你以佳昀的身分，針對今天討論的三則新聞做一個重點總結。\n"
         f"本集三則新聞分別是：\n{news_list}\n"
         "請直接用自然語言總結今天的討論內容，務必不可出現任何[新聞一主題]、[省略]或任何佔位符，"
         "內容要完整、精簡且貼合本集主題，約3~4句話，每句話用句號分隔，開頭加「佳芸: 」"
@@ -111,15 +111,15 @@ async def generate_podcast_script_with_agents(articles, max_minutes=25):
     dialogue.append(summary_a.strip())
 
     summary_prompt_b = (
-        "請你以敏權的身分，針對佳芸的總結內容做補充或分享個人觀點，"
+        "請你以敏權的身分，針對佳昀的總結內容做補充或分享個人觀點，"
         "語氣輕鬆，約2~3句話，每句話用句號分隔，開頭加「敏權: 」"
     )
     summary_b = await ai_service.generate_reply(summary_prompt_b)
     dialogue.append(summary_b.strip())
 
     ending_prompt_a = (
-        "請你以佳芸的身分，用一段話做本集播客的溫馨結語，"
-        "內容要呼應今天討論的三則新聞，開頭加「佳芸: 」，不要有任何佔位符。"
+        "請你以佳昀的身分，用一段話做本集播客的溫馨結語，"
+        "內容要呼應今天討論的三則新聞，開頭加「佳昀: 」，不要有任何佔位符。"
     )
     ending_a = await ai_service.generate_reply(ending_prompt_a)
     dialogue.append(ending_a.strip())
@@ -132,8 +132,8 @@ async def generate_podcast_script_with_agents(articles, max_minutes=25):
             line = line.strip()
             if not line:
                 continue
-            if line.startswith("佳芸:"):
-                speaker = "佳芸"
+            if line.startswith("佳昀:"):
+                speaker = "佳昀"
             elif line.startswith("敏權:"):
                 speaker = "敏權"
             else:
@@ -155,13 +155,13 @@ async def generate_podcast_script_with_agents(articles, max_minutes=25):
     # 轉成結構化陣列
     content = []
     for line in merged_lines:
-        if line.startswith("佳芸:"):
-            content.append(PodcastScriptContent(speaker="佳芸", text=line[len("佳芸:"):].strip()))
+        if line.startswith("佳昀:"):
+            content.append(PodcastScriptContent(speaker="佳昀", text=line[len("佳昀:"):].strip()))
         elif line.startswith("敏權:"):
             content.append(PodcastScriptContent(speaker="敏權", text=line[len("敏權:"):].strip()))
     podcast_script = PodcastScript(
         title="Hakkast 哈客播新聞討論",
-        hosts=["佳芸", "敏權"],
+        hosts=["佳昀", "敏權"],
         content=content
     )
     print(f"腳本字數：{sum(len(c.text) for c in content)}")
