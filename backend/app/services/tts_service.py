@@ -139,9 +139,9 @@ class TTSService:
         
         # 替換常見的英文詞彙和主持人名稱
         english_replacements = {
-            '主持人A': '主持人佳芸',
-            '主持人 A': '主持人佳芸',
-            'A': '佳芸',
+            '主持人A': '主持人佳昀',
+            '主持人 A': '主持人佳昀',
+            'A': '佳昀',
             '主持人B': '主持人敏權',
             '主持人 B': '主持人敏權', 
             'B': '敏權',
@@ -172,13 +172,71 @@ class TTSService:
         
         return cleaned_text
 
-    async def generate_hakka_audio(self, hakka_text: str, romanization: str = "") -> Dict[str, Any]:
+    def _generate_readable_filename(self, text: str, speaker: str = "", index: int = None, script_name: str = "", segment_index: int = None) -> str:
+        """生成可讀性好的音檔檔名
+        
+        Args:
+            text: 要合成的文本
+            speaker: 說話者ID
+            index: 全局索引（棄用，改用segment_index）
+            script_name: 腳本名稱（用於識別同一個腳本）
+            segment_index: 段落索引（同一腳本內的序號）
+        """
+        import re
+        from datetime import datetime
+        
+        # 如果沒有提供腳本名稱，嘗試從文本推斷
+        if not script_name:
+            if "科技新聞" in text or "technology" in text.lower():
+                script_name = "tech_news"
+            elif "播客" in text or "podcast" in text.lower():
+                script_name = "podcast"
+            else:
+                script_name = "hakka_audio"
+        
+        # 清理腳本名稱，只保留英文數字和底線
+        clean_script_name = re.sub(r'[^\w]', '_', script_name)
+        
+        # 說話者簡寫
+        speaker_short = ""
+        if speaker:
+            if "F01" in speaker:
+                speaker_short = "SXF"  # 四縣女聲
+            elif "M01" in speaker:
+                speaker_short = "SXM"  # 四縣男聲
+            elif "hoi" in speaker.lower() and "F" in speaker:
+                speaker_short = "HLF"  # 海陸女聲
+            elif "hoi" in speaker.lower() and "M" in speaker:
+                speaker_short = "HLM"  # 海陸男聲
+            elif "thai" in speaker.lower():
+                speaker_short = "TPF"  # 大埔女聲
+            else:
+                speaker_short = "UNK"  # 未知說話者
+        
+        # 生成序號：腳本序號_段落序號
+        if segment_index is not None:
+            sequence_str = f"{segment_index:03d}"
+        elif index is not None:
+            sequence_str = f"{index:03d}"
+        else:
+            sequence_str = "000"
+        
+        # 生成檔名：腳本名_說話者_序號.wav
+        # 例如：tech_news_SXF_001.wav
+        filename = f"{clean_script_name}_{speaker_short}_{sequence_str}.wav"
+        
+        return filename
+
+    async def generate_hakka_audio(self, hakka_text: str, romanization: str = "", speaker: str = "", segment_index: int = None, script_name: str = "") -> Dict[str, Any]:
         """
         Generate audio from Hakka text using Hakka AI TTS service
         
         Args:
             hakka_text: Hakka text to convert to speech
-            romanization: Optional romanization for pronunciation guidance
+            romanization: Optional romanization for pronunciation guidance  
+            speaker: Speaker ID for filename generation
+            segment_index: Segment index within the script for filename ordering
+            script_name: Script name for grouping related audio files
             
         Returns:
             Dict containing audio file path and metadata
@@ -190,7 +248,7 @@ class TTSService:
             
             if not self.headers:
                 logger.warning("TTS Authentication failed, using fallback")
-                return await self._generate_fallback_audio(hakka_text, romanization)
+                return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
             
             # 清理客語文本中的特殊字符
             # cleaned_text = self._clean_hakka_text(hakka_text)  # 暫時停用清理函數
@@ -198,9 +256,9 @@ class TTSService:
             logger.info(f"Original text: {hakka_text}")
             logger.info(f"Cleaned text: {cleaned_text}")
             
-            # Prepare TTS request
-            audio_id = str(uuid.uuid4())
-            audio_filename = f"{audio_id}.wav"
+            # 生成可讀性好的檔名
+            audio_filename = self._generate_readable_filename(hakka_text, speaker, segment_index, script_name, segment_index)
+            audio_id = audio_filename.replace('.wav', '')  # 用檔名作為 ID
             audio_path = self.audio_dir / audio_filename
             
             # Get available models (use first available Hakka model)
@@ -217,18 +275,26 @@ class TTSService:
                 if 'spk2id' in model_data and model_data['spk2id']:
                     available_speakers = model_data['spk2id']
                     # 優先選擇四縣女聲
-                    if 'hak-xi-TW-vs2-F01' in available_speakers:
-                        speaker_id = 'hak-xi-TW-vs2-F01'
-                        language_id = 'hak-xi-TW'
-                    else:
-                        speaker_id = available_speakers[0]
-                        # 根據 speaker_id 推斷 language_id
-                        if 'hoi' in speaker_id:
-                            language_id = 'hak-hoi-TW'
-                        elif 'thai' in speaker_id:
-                            language_id = 'hak-thai-TW'
-                        else:
+                    if isinstance(available_speakers, dict):
+                        if 'hak-xi-TW-vs2-F01' in available_speakers:
+                            speaker_id = 'hak-xi-TW-vs2-F01'
                             language_id = 'hak-xi-TW'
+                        else:
+                            speaker_id = list(available_speakers.keys())[0]
+                    elif isinstance(available_speakers, list):
+                        if 'hak-xi-TW-vs2-F01' in available_speakers:
+                            speaker_id = 'hak-xi-TW-vs2-F01'
+                            language_id = 'hak-xi-TW'
+                        else:
+                            speaker_id = available_speakers[0]
+                    
+                    # 根據 speaker_id 推斷 language_id
+                    if 'hoi' in speaker_id:
+                        language_id = 'hak-hoi-TW'
+                    elif 'thai' in speaker_id:
+                        language_id = 'hak-thai-TW'
+                    else:
+                        language_id = 'hak-xi-TW'
             
             # 智能選擇 textType
             # 根據測試結果，roma 格式實際不支援，只有 common 和 characters 有效
@@ -306,17 +372,18 @@ class TTSService:
                 
                 logger.error(f"TTS API error {response.status_code}: {error_text}")
                 logger.error(f"Request payload was: {synthesis_payload}")
-                return await self._generate_fallback_audio(hakka_text, romanization)
+                return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
                 
         except Exception as e:
             logger.error(f"TTS generation failed: {e}")
-            return await self._generate_fallback_audio(hakka_text, romanization)
+            return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
     
-    async def _generate_fallback_audio(self, hakka_text: str, romanization: str = "") -> Dict[str, Any]:
+    async def _generate_fallback_audio(self, hakka_text: str, romanization: str = "", speaker: str = "", segment_index: int = None, script_name: str = "") -> Dict[str, Any]:
         """Generate fallback audio when TTS API is unavailable"""
         try:
-            audio_id = str(uuid.uuid4())
-            audio_filename = f"{audio_id}.wav"
+            # 生成可讀性好的檔名
+            audio_filename = self._generate_readable_filename(hakka_text, speaker, segment_index, script_name, segment_index)
+            audio_id = audio_filename.replace('.wav', '')  # 用檔名作為 ID
             audio_path = self.audio_dir / audio_filename
             
             # Create mock audio file

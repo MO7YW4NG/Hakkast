@@ -72,22 +72,40 @@ class TranslationService:
             
             if response.status_code == 200:
                 result = response.json()
-                
-                # Extract translation result based on actual API response format
-                # API returns: {"code": "200", "output": "translated_text", "trans_mode": "hakka_zh_hk"}
                 if result.get('code') == '200':
                     hakka_text = result.get('output', chinese_text)
-                    romanization = self._generate_romanization(hakka_text)
-                    
+
+                    # 數字調拼音API
+                    py_resp = await self.client.post(
+                        f'{self.base_url}/MT/translate/hakka_hk_py',
+                        headers=self.headers,
+                        json={"input": hakka_text}
+                    )
+                    if py_resp.status_code == 200:
+                        romanization = py_resp.json().get("output", "")
+                    else:
+                        romanization = self._generate_romanization(hakka_text)
+
+                    # 調型符號拼音API
+                    tone_resp = await self.client.post(
+                        f'{self.base_url}/MT/translate/hakka_hk_py_tone',
+                        headers=self.headers,
+                        json={"input": hakka_text}
+                    )
+                    if tone_resp.status_code == 200:
+                        romanization_tone = tone_resp.json().get("output", "")
+                    else:
+                        romanization_tone = self._generate_tone_symbol_romanization(hakka_text)
+
                     return {
                         "hakka_text": hakka_text,
-                        "romanization": romanization, 
+                        "romanization": romanization,
+                        "romanization_tone": romanization_tone,
                         "original_chinese": chinese_text,
-                        "api_response": result,  # Include full API response for debugging
-                        # TTS-ready metadata
+                        "api_response": result,
                         "tts_ready": True,
                         "text_length": len(hakka_text),
-                        "estimated_speech_duration": max(5, len(hakka_text) * 0.5)  # seconds
+                        "estimated_speech_duration": max(5, len(hakka_text) * 0.5)
                     }
                 else:
                     logger.error(f"Translation API returned error code: {result.get('code')}")
@@ -494,6 +512,27 @@ class TranslationService:
                 i += 1
         
         return ' '.join(romanization_parts)
+    #我是調型符號:D
+    def _generate_tone_symbol_romanization(self, hakka_text: str) -> str:
+        tone_symbol_map = {
+            '𠊎': 'ngâi',
+            '食': 'si̍t',
+        }
+        result = []
+        i = 0
+        while i < len(hakka_text):
+            matched = False
+            for length in range(min(3, len(hakka_text) - i), 0, -1):
+                substring = hakka_text[i:i+length]
+                if substring in tone_symbol_map:
+                    result.append(tone_symbol_map[substring])
+                    i += length
+                    matched = True
+                    break
+            if not matched:
+                result.append(hakka_text[i])
+                i += 1
+        return ' '.join(result)
 
     async def close(self):
         """Close the HTTP client"""

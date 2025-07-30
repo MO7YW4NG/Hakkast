@@ -51,8 +51,9 @@ class PodcastResponse(BaseModel):
 class PodcastScriptContent(BaseModel):
     speaker: str
     text: str
-    hakka_text: Optional[str] = None
-    romanization: Optional[str] = None
+    hakka_text: Optional[str] = None # 客語漢字
+    romanization: Optional[str] = None # 數字調
+    romanization_tone: Optional[str] = None  # 調型符號
 
 class PodcastScript(BaseModel):
     title: str
