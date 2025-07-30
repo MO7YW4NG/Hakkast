@@ -8,7 +8,7 @@ import asyncio
 from app.services.crawl4ai_service import crawl_news
 #from app.services.pydantic_ai_service import PydanticAIService
 #from app.models.podcast import PodcastGenerationRequest
-from app.services.agents import generate_podcast_script_with_agents
+from app.services.ai_service import AIService
 import json
 from app.services.translation_service import TranslationService
 
@@ -116,7 +116,8 @@ async def interactive_podcast_generator():
         ])
         
         # 產生腳本
-        podcast_script = await generate_podcast_script_with_agents(crawled_articles, max_minutes=25)
+        ai_service = AIService()
+        podcast_script = await ai_service.generate_podcast_script_with_agents(crawled_articles, max_minutes=25)
         print("\n腳本生成完成")
         print("進行客語翻譯...")
         podcast_script = await add_hakka_translation_to_script(podcast_script, mode="hakka_zh_hk")  # 四縣腔

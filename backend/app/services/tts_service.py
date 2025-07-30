@@ -108,8 +108,13 @@ class TTSService:
             
         return None
     
-    def _clean_hakka_text(self, text: str) -> str:
-        """清理客語文本中的特殊字符"""
+    def _clean_hakka_text(self, text: str, preserve_romanization: bool = False) -> str:
+        """清理客語文本中的特殊字符
+        
+        Args:
+            text: 要清理的文本
+            preserve_romanization: 是否保留羅馬拼音（英文字母）
+        """
         # 常見的客語特殊字符替換
         replacements = {
             '𠊎': '我',      # 我
@@ -131,7 +136,6 @@ class TTSService:
         for old, new in replacements.items():
             cleaned_text = cleaned_text.replace(old, new)
         
-        # 移除或替換英文字母和數字，因為TTS API不支援
         import re
         
         # 移除羅馬拼音標調符號 (¹²³⁴⁵⁶⁷⁸⁰)
@@ -151,19 +155,28 @@ class TTSService:
             'TTS': '語音合成',
         }
         
-        for eng, chi in english_replacements.items():
-            cleaned_text = cleaned_text.replace(eng, chi)
+        # 只有在不保留羅馬拼音時才進行英文替換和移除
+        if not preserve_romanization:
+            for eng, chi in english_replacements.items():
+                cleaned_text = cleaned_text.replace(eng, chi)
+            
+            # 移除羅馬拼音字母和數字
+            # 這會移除所有英文字母，包括羅馬拼音
+            cleaned_text = re.sub(r'[a-zA-Z0-9]+', '', cleaned_text)
+            
+            # 只保留中文字符、常見標點符號
+            cleaned_text = re.sub(r'[^\u4e00-\u9fff，。？！；：「」『』（）]', '', cleaned_text)
+        else:
+            # 保留羅馬拼音時，只移除數字和特殊符號，保留英文字母
+            # 清理多餘的空格和標點
+            cleaned_text = re.sub(r'\s+', ' ', cleaned_text)  # 保留單個空格
         
-        # 移除羅馬拼音字母和數字
-        # 這會移除所有英文字母，包括羅馬拼音
-        cleaned_text = re.sub(r'[a-zA-Z0-9]+', '', cleaned_text)
+        # 清理多餘的空格
+        if not preserve_romanization:
+            cleaned_text = re.sub(r'\s+', '', cleaned_text)  # 移除所有空格
         
-        # 清理多餘的空格和標點
-        cleaned_text = re.sub(r'\s+', '', cleaned_text)  # 移除所有空格
-        cleaned_text = cleaned_text.replace('  ', '')    # 移除多餘空格
-        
-        # 只保留中文字符、常見標點符號
-        cleaned_text = re.sub(r'[^\u4e00-\u9fff，。？！；：「」『』（）]', '', cleaned_text)
+        cleaned_text = cleaned_text.replace('  ', ' ')    # 移除多餘空格
+        cleaned_text = cleaned_text.strip()
         
         # 限制文本長度，避免TTS API超時
         if len(cleaned_text) > 150:
@@ -171,6 +184,66 @@ class TTSService:
             logger.warning(f"Text truncated to 150 chars to avoid TTS timeout")
         
         return cleaned_text
+
+    def _clean_romanization(self, romanization: str) -> str:
+        """清理羅馬拼音，使其更適合TTS API"""
+        import re
+        
+        cleaned = romanization.strip()
+        
+        # 替換英文單詞為客語音近似詞
+        english_to_hakka_replacements = {
+            'Hakkast': 'ha24 ka24 su24',  # 哈客蘇 (音近似)
+            'NHS': 'en24 xi24 si24',      # 恩西斯
+            'AI': 'a24 i24',              # 阿伊  
+            'IT': 'ai24 ti24',            # 愛帝
+        }
+        
+        for eng, hakka_approx in english_to_hakka_replacements.items():
+            if eng in cleaned:
+                cleaned = cleaned.replace(eng, hakka_approx)
+                logger.info(f"Replaced English word: '{eng}' -> '{hakka_approx}'")
+        
+        # 檢查是否所有單詞都有數字聲調，如果沒有就添加默認聲調
+        words = cleaned.split()
+        processed_words = []
+        
+        for word in words:
+            # 移除標點符號來檢查核心單詞
+            punctuation = re.findall(r'[^\w]', word)  # 保存標點符號
+            clean_word = re.sub(r'[^\w]', '', word)   # 移除標點符號
+            
+            if clean_word:
+                # 檢查單詞是否已經有數字聲調
+                if not re.search(r'\d', clean_word):
+                    # 如果沒有數字，添加默認聲調24
+                    new_clean_word = clean_word + '24'
+                    # 重新組合單詞和標點符號
+                    if punctuation:
+                        processed_word = word.replace(clean_word, new_clean_word)
+                    else:
+                        processed_word = new_clean_word
+                    processed_words.append(processed_word)
+                    logger.info(f"Added default tone to word: '{word}' -> '{processed_word}'")
+                else:
+                    # 已經有數字聲調，保持原樣
+                    processed_words.append(word)
+            else:
+                # 空單詞或只有標點符號，保持原樣
+                processed_words.append(word)
+        
+        cleaned = ' '.join(processed_words)
+        
+        # 清理多餘的空格
+        cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+        
+        # 限制長度，避免TTS超時
+        if len(cleaned) > 120:
+            cleaned = cleaned[:120].strip()
+            logger.warning(f"Romanization truncated to 120 chars to avoid TTS timeout")
+        
+        logger.info(f"Romanization cleaning: '{romanization}' -> '{cleaned}'")
+        return cleaned
 
     def _generate_readable_filename(self, text: str, speaker: str = "", index: int = None, script_name: str = "", segment_index: int = None) -> str:
         """生成可讀性好的音檔檔名
@@ -250,11 +323,17 @@ class TTSService:
                 logger.warning("TTS Authentication failed, using fallback")
                 return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
             
-            # 清理客語文本中的特殊字符
-            # cleaned_text = self._clean_hakka_text(hakka_text)  # 暫時停用清理函數
-            cleaned_text = hakka_text  # 直接使用原始文本
-            logger.info(f"Original text: {hakka_text}")
-            logger.info(f"Cleaned text: {cleaned_text}")
+            # 優先使用羅馬拼音，因為客語TTS引擎對羅馬拼音支持更好
+            if romanization and romanization.strip():
+                # 清理和預處理羅馬拼音
+                cleaned_text = self._clean_romanization(romanization)
+                logger.info(f"Using cleaned romanization for TTS: {cleaned_text}")
+                logger.info(f"Original romanization: {romanization}")
+                logger.info(f"Original hakka text: {hakka_text}")
+            else:
+                # 如果沒有羅馬拼音，使用原始客語文本，但不進行過度清理
+                cleaned_text = hakka_text
+                logger.info(f"No romanization provided, using hakka text: {cleaned_text}")
             
             # 生成可讀性好的檔名
             audio_filename = self._generate_readable_filename(hakka_text, speaker, segment_index, script_name, segment_index)
@@ -296,20 +375,25 @@ class TTSService:
                     else:
                         language_id = 'hak-xi-TW'
             
-            # 智能選擇 textType
-            # 根據測試結果，roma 格式實際不支援，只有 common 和 characters 有效
-            text_type = "common"  # 預設使用中文格式
-            
-            # 檢查文本內容決定使用哪種格式
+            # 智能選擇 textType - 優先使用羅馬拼音格式
             import re
-            if re.search(r'[a-zA-Z]', cleaned_text):
-                # 如果包含英文字母，可能是羅馬拼音，但API不支援
-                logger.warning(f"Text contains romanization but API doesn't support 'roma' textType. Using 'common' instead.")
-                text_type = "common"
+            
+            if romanization and romanization.strip():
+                # 如果有羅馬拼音，嘗試使用 roma 格式
+                text_type = "roma"
+                logger.info(f"Using 'roma' textType for romanization input")
+            elif re.search(r'[a-zA-Z]', cleaned_text):
+                # 如果文本包含英文字母，可能是羅馬拼音
+                text_type = "roma"
+                logger.info(f"Text contains romanization, using 'roma' textType")
             elif re.search(r'[\u4e00-\u9fff]', cleaned_text):
-                # 包含中文字符，使用 common 或 characters
-                # characters 和 common 都支援中文，選擇 common
+                # 包含中文字符，使用 common 格式
                 text_type = "common"
+                logger.info(f"Text contains Chinese characters, using 'common' textType")
+            else:
+                # 預設使用 roma 格式
+                text_type = "roma"
+                logger.info(f"Default to 'roma' textType")
                 
             logger.info(f"Selected textType: {text_type}")
             
@@ -336,12 +420,39 @@ class TTSService:
             
             logger.info(f"TTS request payload: {synthesis_payload}")
             
-            # Call TTS synthesis API
+            # Call TTS synthesis API with retry logic for textType
             response = await self.client.post(
                 f'{self.base_url}/api/v1/tts/synthesize',
                 headers=self.headers,
                 json=synthesis_payload
             )
+            
+            # If roma textType failed, retry with common textType but keep using romanization
+            if response.status_code != 200 and text_type == "roma":
+                logger.warning(f"TTS with 'roma' textType failed (status {response.status_code}), retrying with 'common' textType but keeping romanization")
+                synthesis_payload["input"]["textType"] = "common"
+                
+                # Keep using the cleaned romanization instead of falling back to hakka_text
+                # synthesis_payload["input"]["text"] stays the same (cleaned romanization)
+                logger.info(f"Retrying with 'common' textType using romanization: {cleaned_text}")
+                
+                response = await self.client.post(
+                    f'{self.base_url}/api/v1/tts/synthesize',
+                    headers=self.headers,
+                    json=synthesis_payload
+                )
+                
+                # If romanization with common textType also fails, then try hakka_text
+                if response.status_code != 200 and romanization and romanization.strip():
+                    logger.warning(f"Romanization with 'common' textType also failed (status {response.status_code}), trying hakka_text as last resort")
+                    synthesis_payload["input"]["text"] = hakka_text
+                    logger.info(f"Final fallback to hakka text: {hakka_text}")
+                    
+                    response = await self.client.post(
+                        f'{self.base_url}/api/v1/tts/synthesize',
+                        headers=self.headers,
+                        json=synthesis_payload
+                    )
             
             if response.status_code == 200:
                 # Save audio data to file
