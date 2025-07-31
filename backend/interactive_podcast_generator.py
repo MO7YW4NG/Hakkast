@@ -34,7 +34,6 @@ async def interactive_podcast_generator():
     """
     互動式播客生成主程式
     """
-
     print("歡迎使用 Hakkast")
 
     # 顯示主題選項
@@ -77,6 +76,22 @@ async def interactive_podcast_generator():
     
     # 爬取新聞
     try:
+        # 選擇腔調
+        print("請選擇客語腔調：")
+        print("1. 四縣腔")
+        print("2. 海陸腔")
+        while True:
+            dialect_choice = input("請輸入選項: ").strip()
+            if dialect_choice == "1":
+                dialect = "sihxian"
+                break
+            elif dialect_choice == "2":
+                dialect = "hailu"
+                break
+            else:
+                print("無效選項，請輸入 1 或 2")
+                continue
+
         crawled_articles = await crawl_news(topic_key, max_articles)
         
         if not crawled_articles:
@@ -120,7 +135,9 @@ async def interactive_podcast_generator():
         podcast_script = await ai_service.generate_podcast_script_with_agents(crawled_articles, max_minutes=25)
         print("\n腳本生成完成")
         print("進行客語翻譯...")
-        podcast_script = await add_hakka_translation_to_script(podcast_script, mode="hakka_zh_hk")  # 四縣腔
+
+        # 傳 dialect 給 add_hakka_translation_to_script
+        podcast_script = await add_hakka_translation_to_script(podcast_script, dialect=dialect)
         print("翻譯完成")
         print(podcast_script.model_dump_json(indent=2))
        
@@ -151,50 +168,16 @@ async def interactive_podcast_generator():
         import traceback
         traceback.print_exc()
 
-async def add_hakka_translation_to_script(podcast_script, mode="hakka_zh_hk"):
-    """
-    將 content 裡每段 text 翻譯成客語漢字（四縣腔/海陸腔），並產生羅馬拼音
-    """
+#將 content 裡 text 翻譯成客語漢字，並產生羅馬拼音（四縣腔/海陸腔）
+async def add_hakka_translation_to_script(podcast_script, dialect="sihxian"):
     service = TranslationService()
-    endpoint = "/MT/translate/hakka_zh_hk" if mode == "hakka_zh_hk" else "/MT/translate/hakka_hailu_zh_hk"
-    for item in podcast_script.content:  
-        payload = {"input": item.text}   
+    for item in podcast_script.content:
         if not service.headers:
             await service.login()
-        resp = await service.client.post(
-            service.base_url + endpoint,
-            headers=service.headers,
-            json=payload
-        )
-        if resp.status_code == 200:
-            result = resp.json()
-            item.hakka_text = result.get("output", "")
-
-            # 呼叫數字調拼音API
-            py_resp = await service.client.post(
-                service.base_url + "/MT/translate/hakka_hk_py",
-                headers=service.headers,
-                json={"input": item.hakka_text}
-            )
-            if py_resp.status_code == 200:
-                item.romanization = py_resp.json().get("output", "")
-            else:
-                item.romanization = service._generate_romanization(item.hakka_text) if item.hakka_text else ""
-
-            # 呼叫調型符號拼音API
-            tone_resp = await service.client.post(
-                service.base_url + "/MT/translate/hakka_hk_py_tone",
-                headers=service.headers,
-                json={"input": item.hakka_text}
-            )
-            if tone_resp.status_code == 200:
-                item.romanization_tone = tone_resp.json().get("output", "")
-            else:
-                item.romanization_tone = service._generate_tone_symbol_romanization(item.hakka_text) if item.hakka_text else ""
-        else:
-            item.hakka_text = "" 
-            item.romanization = ""
-            item.romanization_tone = ""
+        result = await service.translate_chinese_to_hakka(item.text, dialect=dialect)
+        item.hakka_text = result.get("hakka_text", "")
+        item.romanization = result.get("romanization", "")
+        item.romanization_tone = result.get("romanization_tone", "")
     await service.close()
     return podcast_script
 

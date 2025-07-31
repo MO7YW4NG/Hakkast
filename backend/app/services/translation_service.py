@@ -41,17 +41,10 @@ class TranslationService:
             logger.error(f"Login failed: {e}")
             
         return False
-    
-    async def translate_chinese_to_hakka(self, chinese_text: str) -> Dict[str, Any]:
-        """
-        Translate Traditional Chinese text to Hakka using Hakka AI API
-        
-        Args:
-            chinese_text: Traditional Chinese text to translate
-            
-        Returns:
-            Dict containing hakka_text and romanization
-        """
+
+#根據 dialect (四縣/海陸)決定 endpoint。中文->客語漢字->調型符號/數字調
+    async def translate_chinese_to_hakka(self, chinese_text: str, dialect: str = "sihxian") -> Dict[str, Any]:
+
         try:
             # Ensure we're authenticated
             if not self.headers:
@@ -61,11 +54,20 @@ class TranslationService:
                 logger.warning("Authentication failed, using fallback translation")
                 return self._get_fallback_translation(chinese_text)
             
-            # Call the translation API
+            # 根據腔調選擇 endpoint
+            if dialect == "hailu":
+                hanzi_endpoint = "/MT/translate/hakka_hailu_zh_hk"
+                py_endpoint = "/MT/translate/hakka_hailu_hk_py"
+                tone_endpoint = "/MT/translate/hakka_hailu_hk_py_tone"
+            else:
+                hanzi_endpoint = "/MT/translate/hakka_zh_hk"
+                py_endpoint = "/MT/translate/hakka_hk_py"
+                tone_endpoint = "/MT/translate/hakka_hk_py_tone"
+
             payload = {'input': chinese_text}
-            
+            # 中文→客語漢字
             response = await self.client.post(
-                f'{self.base_url}/MT/translate/hakka_zh_hk',
+                f'{self.base_url}{hanzi_endpoint}',
                 headers=self.headers,
                 json=payload
             )
@@ -75,9 +77,9 @@ class TranslationService:
                 if result.get('code') == '200':
                     hakka_text = result.get('output', chinese_text)
 
-                    # 數字調拼音API
+                    # 客語漢字→數字調拼音
                     py_resp = await self.client.post(
-                        f'{self.base_url}/MT/translate/hakka_hk_py',
+                        f'{self.base_url}{py_endpoint}',
                         headers=self.headers,
                         json={"input": hakka_text}
                     )
@@ -86,9 +88,9 @@ class TranslationService:
                     else:
                         romanization = self._generate_romanization(hakka_text)
 
-                    # 調型符號拼音API
+                    # 客語漢字→調型符號拼音
                     tone_resp = await self.client.post(
-                        f'{self.base_url}/MT/translate/hakka_hk_py_tone',
+                        f'{self.base_url}{tone_endpoint}',
                         headers=self.headers,
                         json={"input": hakka_text}
                     )
@@ -510,7 +512,6 @@ class TranslationService:
                 # If no mapping found, keep original character
                 romanization_parts.append(hakka_text[i])
                 i += 1
-        
         return ' '.join(romanization_parts)
     #我是調型符號:D
     def _generate_tone_symbol_romanization(self, hakka_text: str) -> str:
