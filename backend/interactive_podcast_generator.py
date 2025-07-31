@@ -177,6 +177,7 @@ async def add_hakka_translation_to_script(podcast_script, dialect="sihxian"):
     ai_service = AIService()
     
     for item in podcast_script.content:
+        print(f"[處理前] {item.speaker}: {item.text}")
         if not service.headers:
             await service.login()
         result = await service.translate_chinese_to_hakka(item.text, dialect=dialect)
@@ -184,7 +185,7 @@ async def add_hakka_translation_to_script(podcast_script, dialect="sihxian"):
         item.romanization = result.get("romanization", "")
         item.romanization_tone = result.get("romanization_tone", "")
         
-        # 🔧 英文轉羅馬拼音處理 - 解決TTS標調問題
+        # 英文轉羅馬拼音處理 - 解決TTS標調問題
         if item.romanization:
             print(f"處理羅馬拼音中的英文單字: {item.romanization}")
             try:

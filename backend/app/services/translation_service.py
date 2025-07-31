@@ -2,6 +2,7 @@ import httpx
 import logging
 from typing import Dict, Any, Optional
 from app.core.config import settings
+from cn2an import an2cn  #記得 pip install cn2an ㄛ
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +44,28 @@ class TranslationService:
         return False
 
 #根據 dialect (四縣/海陸)決定 endpoint。中文->客語漢字->調型符號/數字調
+    def _convert_numbers_to_chinese(self, text: str) -> str:
+        """
+        將字串中的數字->中文
+        """
+        import re
+        def repl(match):
+            num = match.group()
+            try:
+                return an2cn(num)
+            except Exception:
+                return num
+        converted = re.sub(r'\d+', repl, text)
+        if converted != text:
+            print(f"[數字轉中文] 原文: {text} -> 轉換後: {converted}")
+        return converted
+
     async def translate_chinese_to_hakka(self, chinese_text: str, dialect: str = "sihxian") -> Dict[str, Any]:
 
         try:
+            # 將數字轉為中文
+            chinese_text = self._convert_numbers_to_chinese(chinese_text)
+
             # Ensure we're authenticated
             if not self.headers:
                 await self.login()
