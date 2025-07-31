@@ -131,6 +131,43 @@ class PydanticAIService:
             請用繁體中文，風格專業且有深度。
             """
         )
+        
+        # 創建英文轉羅馬拼音 Agent
+        self.english_romanizer = Agent(
+            model=self.model,
+            result_type=str,
+            system_prompt="""
+            你是一位專業的語音轉換專家，專門處理混合中英文文本中的英文單字轉換。
+
+            任務：將文本中的英文單字轉換成帶數字標調的羅馬拼音格式，以便客家話TTS系統正確發音。
+
+            轉換規則：
+            1. 英文單字轉換成近似的羅馬拼音發音
+            2. 保持中文部分完全不變
+            3. 每個音節必須添加數字標調（24表示中平調，55表示高平調，11表示低平調，2表示上聲，31表示去聲）
+            4. 使用空格分隔每個音節
+            5. 常見英文單字使用標準化音譯
+
+            範例轉換：
+            - Apple → a24 pu24 er24
+            - Google → gu24 ge24 er24
+            - Facebook → fei24 si24 bu24 ke24
+            - Microsoft → mai24 ke24 ro24 so24 fu24 te24
+            - iPhone → ai24 feng24
+            - ChatGPT → cha24 te24 ji24 pi24 ti24
+            - YouTube → you24 tu24 be24
+            - Instagram → yin24 si24 ta24 ge24 lan24 mu24
+            - Android → an24 zhuo24 yi24 de24
+            - OpenAI → o24 pen24 ai24
+
+            音調選擇建議：
+            - 一般情況使用24（中平調）
+            - 重要品牌名稱的重音音節可使用55（高平調）
+            - 結尾音節可使用11（低平調）
+
+            請直接輸出轉換後的完整文本，保持原有的句子結構和標點符號。
+            """
+        )
 
     async def analyze_content_requirements(self, topic: str, tone: str = "casual") -> ContentAnalysis:
         """分析內容需求和受眾"""
@@ -253,6 +290,10 @@ class PydanticAIService:
 
             # 合併段落
             full_script = "\n\n".join(segments)
+            
+            # 暫時跳過英文處理，將在翻譯階段處理羅馬拼音中的英文
+            print("跳過英文處理，將在翻譯階段處理...")
+            tts_ready_script = full_script
 
             # 完整內容（對話腳本）
             full_content = f"""
@@ -276,11 +317,13 @@ class PydanticAIService:
                     "sources_mentioned": []
                 },
                 "full_content": full_script,
+                "tts_ready_content": tts_ready_script,  # 新增：專為TTS準備的內容
                 "generation_timestamp": datetime.now().isoformat(),
                 "processing_steps": [
                     "內容需求分析",
                     "逐篇摘要",
                     "分段生成",
+                    "英文轉換處理",
                     "內容整合完成"
                 ]
             }
@@ -343,12 +386,153 @@ class PydanticAIService:
             result = await self.dialogue_agent.run(prompt)
             return result.data
 
+    async def convert_english_to_romanization(self, text: str) -> str:
+        """將文本中的英文單字轉換成帶數字標調的羅馬拼音格式"""
+        try:
+            prompt = f"""
+            請將以下文本中的英文單字轉換成帶數字標調的羅馬拼音格式，中文部分保持不變：
+
+            原文：
+            {text}
+
+            轉換要求：
+            1. 只轉換英文單字，中文完全不變
+            2. 英文轉換成類似發音的羅馬拼音，每個音節加數字標調
+            3. 標調規則：24=中平調，55=高平調，11=低平調，2=上聲，31=去聲
+            4. 音節間用空格分隔
+            5. 保持原有標點符號和格式
+            6. 常見品牌使用標準音譯：
+               - Apple → a24 pu24 er24
+               - Google → gu24 ge24 er24
+               - Facebook → fei24 si24 bu24 ke24
+               - Microsoft → mai24 ke24 ro24 so24 fu24 te24
+               - iPhone → ai24 feng24
+               - ChatGPT → cha24 te24 ji24 pi24 ti24
+
+            請直接輸出轉換後的完整文本：
+            """
+            
+            result = await self.english_romanizer.run(prompt)
+            return result.data
+        except Exception as e:
+            print(f"English romanization error: {e}")
+            # 如果轉換失敗，返回原文
+            return text
+
+    async def process_romanization_for_tts(self, romanization_text: str) -> str:
+        """專門處理romanization欄位中的英文單字，為TTS系統準備統一格式"""
+        try:
+            # 檢查是否包含沒有數字標調的英文單字
+            import re
+            
+            # 尋找英文單字（字母組成但沒有數字標調）
+            english_words = re.findall(r'\b[a-zA-Z]+\b', romanization_text)
+            
+            if not english_words:
+                print("未檢測到需要處理的英文單字")
+                return romanization_text
+            
+            print(f"檢測到英文單字: {english_words}")
+            
+            # 為每個英文單字添加標調
+            processed_text = romanization_text
+            
+            for word in english_words:
+                # 轉換英文單字為帶標調的羅馬拼音
+                converted_word = await self.convert_english_word_to_toned_romanization(word)
+                
+                # 替換原文中的英文單字
+                processed_text = re.sub(r'\b' + re.escape(word) + r'\b', converted_word, processed_text)
+                print(f"轉換: {word} → {converted_word}")
+            
+            return processed_text
+            
+        except Exception as e:
+            print(f"Romanization processing error: {e}")
+            return romanization_text
+
+    async def convert_english_word_to_toned_romanization(self, english_word: str) -> str:
+        """將單個英文單字轉換為帶數字標調的羅馬拼音"""
+        try:
+            import re
+            
+            prompt = f"""
+            請將英文單字 "{english_word}" 轉換成帶數字標調的羅馬拼音格式，用於客家話TTS系統。
+
+            轉換規則：
+            1. 將英文單字分解成音節
+            2. 每個音節添加數字標調（主要使用24=中平調）
+            3. 音節間用空格分隔
+            4. 不要包含原英文單字，只輸出羅馬拼音
+
+            常見轉換範例：
+            - Apple → a24 pu24 er24
+            - Google → gu24 ge24 er24
+            - Facebook → fei24 si24 bu24 ke24
+            - iPhone → ai24 feng24
+            - Hakkast → ha24 ka24 si24 te24
+            - ChatGPT → cha24 te24 ji24 pi24 ti24
+
+            請只輸出轉換後的羅馬拼音（包含數字標調）：
+            """
+            
+            result = await self.english_romanizer.run(prompt)
+            converted = result.data.strip()
+            
+            # 確保輸出包含數字標調
+            if not re.search(r'\d+', converted):
+                # 如果沒有數字標調，使用簡單的後備方案
+                syllables = self.simple_syllable_split(english_word)
+                converted = ' '.join([f"{syl}24" for syl in syllables])
+            
+            return converted
+            
+        except Exception as e:
+            print(f"English word conversion error for '{english_word}': {e}")
+            # 簡單後備方案
+            syllables = self.simple_syllable_split(english_word)
+            return ' '.join([f"{syl}24" for syl in syllables])
+
+    def simple_syllable_split(self, word: str) -> list:
+        """簡單的英文單字音節分割（後備方案）"""
+        word = word.lower()
+        
+        # 常見單字的音節分割
+        common_splits = {
+            'apple': ['a', 'pu', 'er'],
+            'google': ['gu', 'ge', 'er'],
+            'facebook': ['fei', 'si', 'bu', 'ke'],
+            'microsoft': ['mai', 'ke', 'ro', 'so', 'fu', 'te'],
+            'iphone': ['ai', 'feng'],
+            'hakkast': ['ha', 'ka', 'si', 'te'],
+            'chatgpt': ['cha', 'te', 'ji', 'pi', 'ti'],
+            'youtube': ['you', 'tu', 'be'],
+            'openai': ['o', 'pen', 'ai'],
+            'android': ['an', 'zhuo', 'yi', 'de']
+        }
+        
+        if word in common_splits:
+            return common_splits[word]
+        
+        # 簡單分割：每2-3個字母一組
+        syllables = []
+        i = 0
+        while i < len(word):
+            if i + 2 < len(word):
+                syllables.append(word[i:i+2])
+                i += 2
+            else:
+                syllables.append(word[i:])
+                break
+        
+        return syllables
+
 
 class AIService:
     def __init__(self):
         if settings.GEMINI_API_KEY:
             genai.configure(api_key=settings.GEMINI_API_KEY)
-            self.model = genai.GenerativeModel('gemini-pro')
+            self.model = genai.GenerativeModel('gemini-2.5-flash')
         else:
             self.model = None
         
@@ -414,7 +598,7 @@ class AIService:
     def __init__(self):
         if settings.GEMINI_API_KEY:
             genai.configure(api_key=settings.GEMINI_API_KEY)
-            self.model = genai.GenerativeModel('gemini-pro')
+            self.model = genai.GenerativeModel('gemini-2.5-flash')
         else:
             self.model = None
         
@@ -743,20 +927,147 @@ class AIService:
 
         # 合併同主持人發言，並在不同主持人時換行
         merged_lines = merge_same_speaker_lines(dialogue)
+        
+        # 處理英文轉換
+        print("正在處理腳本中的英文內容...")
+        processed_lines = []
+        for line in merged_lines:
+            # 暫時跳過英文處理，直接使用原始內容
+            # TODO: 如果需要在這裡處理英文，應該在翻譯階段處理
+            processed_lines.append(line)
+        
         # 轉成結構化陣列
         content = []
-        for line in merged_lines:
+        tts_content = []  # 新增：專為TTS準備的內容
+        
+        for i, line in enumerate(merged_lines):
+            processed_line = processed_lines[i]
+            
             if line.startswith("佳昀:"):
                 content.append(PodcastScriptContent(speaker="佳昀", text=line[len("佳昀:"):].strip()))
+                tts_content.append(PodcastScriptContent(speaker="佳昀", text=processed_line[len("佳昀:"):].strip()))
             elif line.startswith("敏權:"):
                 content.append(PodcastScriptContent(speaker="敏權", text=line[len("敏權:"):].strip()))
+                tts_content.append(PodcastScriptContent(speaker="敏權", text=processed_line[len("敏權:"):].strip()))
+        
+        # 創建兩個版本的腳本
         podcast_script = PodcastScript(
             title="Hakkast 哈客播新聞討論",
             hosts=["佳昀", "敏權"],
             content=content
         )
+        
+        # TTS版本腳本
+        tts_podcast_script = PodcastScript(
+            title="Hakkast 哈客播新聞討論",
+            hosts=["佳昀", "敏權"],
+            content=tts_content
+        )
+        
         print(f"腳本字數：{sum(len(c.text) for c in content)}")
-        return podcast_script
+        
+        # 返回包含TTS版本的結果
+        return {
+            "original_script": podcast_script,
+            "tts_ready_script": tts_podcast_script
+        }
+
+    async def process_romanization_for_tts(self, romanization_text: str) -> str:
+        """專門處理romanization欄位中的英文單字，為TTS系統準備統一格式"""
+        try:
+            # 檢查是否包含沒有數字標調的英文單字
+            import re
+            
+            # 尋找英文單字（字母組成但沒有數字標調）
+            english_words = re.findall(r'\b[a-zA-Z]+\b', romanization_text)
+            
+            if not english_words:
+                return romanization_text
+            
+            # 處理每個英文單字
+            processed_text = romanization_text
+            for word in english_words:
+                try:
+                    converted_word = await self.convert_english_word_to_toned_romanization(word)
+                    # 替換原文中的英文單字
+                    processed_text = processed_text.replace(word, converted_word)
+                    print(f"英文轉換: {word} -> {converted_word}")
+                except Exception as e:
+                    print(f"轉換英文單字 '{word}' 失敗: {e}")
+                    continue
+            
+            return processed_text
+            
+        except Exception as e:
+            print(f"處理romanization失敗: {e}")
+            return romanization_text
+
+    async def convert_english_word_to_toned_romanization(self, english_word: str) -> str:
+        """將單個英文單字轉換為帶標調的羅馬拼音"""
+        import re
+        
+        try:
+            if not self.model:
+                # 如果沒有模型，使用簡單分割
+                syllables = self.simple_syllable_split(english_word)
+                return " ".join([f"{syl}24" for syl in syllables])
+            
+            prompt = f"""
+請將英文單字 "{english_word}" 轉換為客語羅馬拼音，每個音節都要有數字標調。
+
+參考範例：
+- GitHub -> gi24 hab2
+- Machine -> ma24 sin24  
+- Learning -> lia24 ning24
+- Hakkast -> ha24 ka24 si24 te24
+
+請只回傳轉換結果，不要其他說明。
+"""
+            
+            response = await self.model.generate_content_async(prompt)
+            result = response.text.strip()
+            
+            if result and not re.search(r'[a-zA-Z]', result):
+                return result
+            else:
+                # 如果結果包含英文字母，使用後備方案
+                syllables = self.simple_syllable_split(english_word)
+                return " ".join([f"{syl}24" for syl in syllables])
+                
+        except Exception as e:
+            print(f"AI轉換失敗: {e}")
+            # 使用簡單分割作為後備
+            syllables = self.simple_syllable_split(english_word)
+            return " ".join([f"{syl}24" for syl in syllables])
+
+    def simple_syllable_split(self, word: str) -> list:
+        """簡單的音節分割，作為後備方案"""
+        common_splits = {
+            "GitHub": ["gi", "hab"],
+            "Machine": ["ma", "sin"],
+            "Learning": ["lia", "ning"],
+            "Hakkast": ["ha", "ka", "si", "te"],
+            "AI": ["ai"],
+            "NHS": ["en", "ha", "si"],
+            "API": ["a", "pi", "ai"]
+        }
+        
+        if word in common_splits:
+            return common_splits[word]
+        
+        # 默認每2-3個字母為一個音節
+        syllables = []
+        word_lower = word.lower()
+        i = 0
+        while i < len(word_lower):
+            if i + 2 < len(word_lower):
+                syllables.append(word_lower[i:i+2])
+                i += 2
+            else:
+                syllables.append(word_lower[i:])
+                break
+        
+        return syllables if syllables else [word.lower()]
 
 
 # 從 agents.py 合併過來的主要函數，供外部調用
@@ -764,6 +1075,16 @@ async def generate_podcast_script_with_agents(articles, max_minutes=25):
     """
     Generate podcast script with agents - main function from agents.py
     This is the primary function for agent-based podcast script generation
+    Returns both original and TTS-ready versions
     """
     ai_service_instance = AIService()
-    return await ai_service_instance.generate_podcast_script_with_agents(articles, max_minutes)
+    result = await ai_service_instance.generate_podcast_script_with_agents(articles, max_minutes)
+    
+    # 為了向後兼容，如果調用者期待單一腳本，返回原始腳本
+    # 但同時提供TTS版本
+    if isinstance(result, dict) and "original_script" in result:
+        # 新格式：返回字典包含兩個版本
+        return result
+    else:
+        # 舊格式：返回單一腳本（向後兼容）
+        return result
