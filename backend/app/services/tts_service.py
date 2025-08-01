@@ -153,6 +153,8 @@ class TTSService:
             'NHS': '英國國民健保',
             'Hakkast': '哈客播',
             'TTS': '語音合成',
+            'G-Cloud': '政府雲端',
+            'VIP': '貴賓',
         }
         
         # 只有在不保留羅馬拼音時才進行英文替換和移除
@@ -164,8 +166,8 @@ class TTSService:
             # 這會移除所有英文字母，包括羅馬拼音
             cleaned_text = re.sub(r'[a-zA-Z0-9]+', '', cleaned_text)
             
-            # 只保留中文字符、常見標點符號
-            cleaned_text = re.sub(r'[^\u4e00-\u9fff，。？！；：「」『』（）]', '', cleaned_text)
+            # 只保留中文字符、常見標點符號（包含驚嘆號和問號）
+            cleaned_text = re.sub(r'[^\u4e00-\u9fff，。？！；：「」『』（）—\-]', '', cleaned_text)
         else:
             # 保留羅馬拼音時，只移除數字和特殊符號，保留英文字母
             # 清理多餘的空格和標點
@@ -178,10 +180,29 @@ class TTSService:
         cleaned_text = cleaned_text.replace('  ', ' ')    # 移除多餘空格
         cleaned_text = cleaned_text.strip()
         
-        # 限制文本長度，避免TTS API超時
-        if len(cleaned_text) > 150:
-            cleaned_text = cleaned_text[:150] + "..."
-            logger.warning(f"Text truncated to 150 chars to avoid TTS timeout")
+        # 調整文本長度限制為300字符，如果文本過長，智能分割而不是截斷
+        if len(cleaned_text) > 300:
+            # 嘗試在標點符號處分割
+            sentences = re.split(r'([。！？])', cleaned_text)
+            result = ""
+            for i in range(0, len(sentences), 2):
+                if i + 1 < len(sentences):
+                    sentence = sentences[i] + sentences[i + 1]
+                else:
+                    sentence = sentences[i]
+                
+                if len(result + sentence) <= 300:
+                    result += sentence
+                else:
+                    break
+            
+            if result:
+                cleaned_text = result
+                logger.info(f"Text intelligently split at sentence boundary: {len(cleaned_text)} chars")
+            else:
+                # 如果無法智能分割，則截斷
+                cleaned_text = cleaned_text[:300]
+                logger.warning(f"Text truncated to 300 chars to avoid TTS timeout")
         
         return cleaned_text
 
@@ -191,12 +212,22 @@ class TTSService:
         
         cleaned = romanization.strip()
         
+        # 移除中文標點符號（這些不應該出現在羅馬拼音中）
+        chinese_punctuation = ['「', '」', '『', '』', '（', '）', '【', '】', '〈', '〉', '《', '》']
+        for punct in chinese_punctuation:
+            cleaned = cleaned.replace(punct, '')
+        
+        # 移除其他非羅馬拼音字符，只保留英文字母、數字、空格和基本標點
+        cleaned = re.sub(r'[^\w\s.,!?-]', '', cleaned)
+        
         # 替換英文單詞為客語音近似詞
         english_to_hakka_replacements = {
             'Hakkast': 'ha24 ka24 su24',  # 哈客蘇 (音近似)
             'NHS': 'en24 xi24 si24',      # 恩西斯
             'AI': 'a24 i24',              # 阿伊  
             'IT': 'ai24 ti24',            # 愛帝
+            'G-Cloud': 'zi24 kau24',      # 政府雲 (音近似)
+            'VIP': 'vi24 ai24 pi24',      # VIP (音譯)
         }
         
         for eng, hakka_approx in english_to_hakka_replacements.items():
@@ -237,13 +268,217 @@ class TTSService:
         # 清理多餘的空格
         cleaned = re.sub(r'\s+', ' ', cleaned).strip()
         
-        # 限制長度，避免TTS超時
-        if len(cleaned) > 120:
-            cleaned = cleaned[:120].strip()
-            logger.warning(f"Romanization truncated to 120 chars to avoid TTS timeout")
+        # 修正有問題的音節
+        cleaned = self._fix_problematic_syllables(cleaned)
         
-        logger.info(f"Romanization cleaning: '{romanization}' -> '{cleaned}'")
+        logger.info(f"Romanization cleaning: '{romanization[:50]}...' -> '{cleaned[:50]}...'")
         return cleaned
+
+    def _fix_problematic_syllables(self, romanization: str) -> str:
+        """修正有問題的音節，提升TTS成功率
+        
+        Args:
+            romanization: 原始羅馬拼音
+            
+        Returns:
+            修正後的羅馬拼音
+        """
+        # 已知有問題的音節 - 直接跳過這些音節
+        problematic_syllables = {
+            'sip2', 'ngiet8', 'ket2', 'nain55', 'dap2'
+        }
+        
+        # 英文近似音模式 - 這些通常是人工合成的，TTS模型中沒有
+        english_approximation_patterns = {
+            'g24-cl24',   # G-Cloud 的近似音
+            'ou24',       # Cloud 的近似音
+            'd24',        # Cloud 結尾的近似音
+            'hiab5',      # 協定的近似音
+            'tin55',      # 進化的近似音
+            'jin55',      # 進化的近似音
+        }
+        
+        # 英文近似音的修正對應表 - 替換成正確的客語音節
+        english_approximation_fixes = {
+            'g24-cl24': 'zi24 kau24',     # G-Cloud -> 政府雲
+            'ou24': 'iun11',              # Cloud -> 雲
+            'd24': '',                    # 移除無意義的尾音
+            'hiab5': 'hiab2 tin24',       # 協定 -> 協定
+            'tin55': 'jin55',             # 進化 -> 進化（修正音調）
+            'jin55': 'fa55',              # 進化 -> 發展（更自然的客語）
+        }
+        
+        words = romanization.split()
+        fixed_words = []
+        skipped_count = 0
+        
+        for word in words:
+            # 移除標點符號來檢查核心音節
+            core_syllable = word.strip('.,!?-')
+            
+            # 跳過已知有問題的音節
+            if core_syllable in problematic_syllables:
+                skipped_count += 1
+                logger.info(f"Skipped problematic syllable: '{word}' (known TTS failure)")
+                continue
+            
+            # 替換英文近似音節
+            if core_syllable in english_approximation_fixes:
+                replacement = english_approximation_fixes[core_syllable]
+                if replacement:  # 如果有替換值
+                    fixed_words.extend(replacement.split())
+                    logger.info(f"Replaced English approximation: '{word}' -> '{replacement}'")
+                else:  # 如果替換值為空，表示跳過
+                    skipped_count += 1
+                    logger.info(f"Removed meaningless syllable: '{word}'")
+                continue
+            
+            # 檢查包含英文近似音模式的複合音節並替換
+            found_pattern = False
+            for pattern in english_approximation_patterns:
+                if pattern in core_syllable and pattern in english_approximation_fixes:
+                    replacement = english_approximation_fixes[pattern]
+                    if replacement:
+                        # 替換模式部分
+                        new_syllable = core_syllable.replace(pattern, replacement)
+                        fixed_words.extend(new_syllable.split())
+                        logger.info(f"Replaced compound approximation: '{word}' -> '{new_syllable}'")
+                    else:
+                        skipped_count += 1
+                        logger.info(f"Removed compound with meaningless pattern: '{word}'")
+                    found_pattern = True
+                    break
+            
+            if not found_pattern:
+                fixed_words.append(word)
+        
+        fixed_romanization = ' '.join(fixed_words)
+        
+        if skipped_count > 0 or len(fixed_words) != len(words):
+            logger.info(f"Applied fixes: {skipped_count} syllables removed, {len(fixed_words) - len(words) + skipped_count} syllables replaced/added")
+            logger.info(f"Original: {len(words)} syllables -> Fixed: {len(fixed_words)} syllables")
+            logger.info("Applied English approximation replacements and removed problematic syllables")
+        
+        return fixed_romanization
+
+    def _split_romanization(self, romanization: str, max_length: int = 150, max_syllables: int = 8) -> list[str]:
+        """將羅馬拼音分割成多個不超過指定長度和音節數的片段
+        
+        Args:
+            romanization: 要分割的羅馬拼音
+            max_length: 每個片段的最大字符長度（備用限制）
+            max_syllables: 每個片段的最大音節數（主要限制）
+            
+        Returns:
+            羅馬拼音片段列表
+        """
+        words = romanization.split()
+        
+        # 如果音節數不超過限制，直接返回
+        if len(words) <= max_syllables and len(romanization) <= max_length:
+            return [romanization]
+        
+        segments = []
+        current_segment = []
+        current_length = 0
+        
+        for word in words:
+            # 計算添加這個單詞後的長度和音節數
+            word_length = len(word) + (1 if current_segment else 0)
+            new_syllable_count = len(current_segment) + 1
+            
+            # 檢查是否超過音節數限制或字符數限制
+            if (new_syllable_count <= max_syllables and 
+                current_length + word_length <= max_length):
+                current_segment.append(word)
+                current_length += word_length
+            else:
+                # 如果當前片段不為空，保存它
+                if current_segment:
+                    segments.append(' '.join(current_segment))
+                
+                # 開始新的片段
+                current_segment = [word]
+                current_length = len(word)
+        
+        # 保存最後一個片段
+        if current_segment:
+            segments.append(' '.join(current_segment))
+        
+        logger.info(f"Romanization split into {len(segments)} segments by syllables (max {max_syllables})")
+        logger.info(f"Segment syllable counts: {[len(s.split()) for s in segments]}")
+        logger.info(f"Segment character counts: {[len(s) for s in segments]}")
+        return segments
+
+    async def _merge_audio_files(self, audio_paths: list[str], output_path: str) -> bool:
+        """合併多個音檔成一個完整的音檔
+        
+        Args:
+            audio_paths: 要合併的音檔路徑列表
+            output_path: 輸出音檔路徑
+            
+        Returns:
+            是否合併成功
+        """
+        try:
+            import wave
+            import struct
+            
+            # 合併的音頻數據
+            merged_frames = []
+            sample_rate = 16000  # TTS API 預設採樣率
+            sample_width = 2     # 16-bit
+            channels = 1         # Mono
+            
+            for audio_path in audio_paths:
+                if not os.path.exists(audio_path):
+                    logger.warning(f"Audio file not found: {audio_path}")
+                    continue
+                
+                try:
+                    with wave.open(audio_path, 'rb') as wav_file:
+                        frames = wav_file.readframes(wav_file.getnframes())
+                        merged_frames.append(frames)
+                        
+                        # 使用第一個檔案的參數作為基準
+                        if not merged_frames or len(merged_frames) == 1:
+                            sample_rate = wav_file.getframerate()
+                            sample_width = wav_file.getsampwidth()
+                            channels = wav_file.getnchannels()
+                            
+                except Exception as e:
+                    logger.error(f"Failed to read audio file {audio_path}: {e}")
+                    continue
+            
+            if not merged_frames:
+                logger.error("No valid audio files to merge")
+                return False
+            
+            # 寫入合併後的音檔
+            with wave.open(output_path, 'wb') as output_wav:
+                output_wav.setnchannels(channels)
+                output_wav.setsampwidth(sample_width)
+                output_wav.setframerate(sample_rate)
+                
+                for frames in merged_frames:
+                    output_wav.writeframes(frames)
+            
+            logger.info(f"Successfully merged {len(merged_frames)} audio files into {output_path}")
+            
+            # 清理臨時檔案
+            for audio_path in audio_paths:
+                try:
+                    if os.path.exists(audio_path) and audio_path != output_path:
+                        os.remove(audio_path)
+                        logger.debug(f"Cleaned up temporary file: {audio_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to clean up temporary file {audio_path}: {e}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Audio merging failed: {e}")
+            return False
 
     def _generate_readable_filename(self, text: str, speaker: str = "", index: int = None, script_name: str = "", segment_index: int = None) -> str:
         """生成可讀性好的音檔檔名
@@ -273,18 +508,24 @@ class TTSService:
         # 說話者簡寫
         speaker_short = ""
         if speaker:
-            if "F01" in speaker:
-                speaker_short = "SXF"  # 四縣女聲
-            elif "M01" in speaker:
-                speaker_short = "SXM"  # 四縣男聲
-            elif "hoi" in speaker.lower() and "F" in speaker:
-                speaker_short = "HLF"  # 海陸女聲
-            elif "hoi" in speaker.lower() and "M" in speaker:
-                speaker_short = "HLM"  # 海陸男聲
+            if "xi" in speaker.lower() and ("F01" in speaker or "f" in speaker.lower()):
+                speaker_short = "SXF"  # 四縣女聲 (佳昀)
+            elif "xi" in speaker.lower() and ("M01" in speaker or "m" in speaker.lower()):
+                speaker_short = "SXM"  # 四縣男聲 (敏權)
+            elif "hoi" in speaker.lower() and ("F01" in speaker or "f" in speaker.lower()):
+                speaker_short = "HLF"  # 海陸女聲 (佳昀)
+            elif "hoi" in speaker.lower() and ("M01" in speaker or "m" in speaker.lower()):
+                speaker_short = "HLM"  # 海陸男聲 (敏權)
             elif "thai" in speaker.lower():
                 speaker_short = "TPF"  # 大埔女聲
             else:
-                speaker_short = "UNK"  # 未知說話者
+                # 從speaker字符串中提取簡短標識
+                if "F" in speaker.upper():
+                    speaker_short = "F"
+                elif "M" in speaker.upper():
+                    speaker_short = "M"
+                else:
+                    speaker_short = "UNK"  # 未知說話者
         
         # 生成序號：腳本序號_段落序號
         if segment_index is not None:
@@ -326,74 +567,109 @@ class TTSService:
             # 優先使用羅馬拼音，因為客語TTS引擎對羅馬拼音支持更好
             if romanization and romanization.strip():
                 # 清理和預處理羅馬拼音
-                cleaned_text = self._clean_romanization(romanization)
+                cleaned_romanization = self._clean_romanization(romanization)
+                
+                # 檢查是否需要分段處理（按音節數限制）
+                romanization_words = cleaned_romanization.split()
+                if len(romanization_words) > 8 or len(cleaned_romanization) > 150:
+                    logger.info(f"Long romanization detected ({len(cleaned_romanization)} chars, {len(romanization_words)} syllables), using segmentation approach")
+                    return await self._generate_segmented_audio(hakka_text, cleaned_romanization, speaker, segment_index, script_name)
+                
+                cleaned_text = cleaned_romanization
+                text_type = "roma"
                 logger.info(f"Using cleaned romanization for TTS: {cleaned_text}")
                 logger.info(f"Original romanization: {romanization}")
-                logger.info(f"Original hakka text: {hakka_text}")
+                logger.info(f"Corresponding hakka text: {hakka_text}")
             else:
-                # 如果沒有羅馬拼音，使用原始客語文本，但不進行過度清理
-                cleaned_text = hakka_text
-                logger.info(f"No romanization provided, using hakka text: {cleaned_text}")
+                # 如果沒有羅馬拼音，使用客語文本並進行清理分割
+                cleaned_text = self._clean_hakka_text(hakka_text)
+                text_type = "common"
+                logger.info(f"No romanization provided, using cleaned hakka text: {cleaned_text}")
             
             # 生成可讀性好的檔名
             audio_filename = self._generate_readable_filename(hakka_text, speaker, segment_index, script_name, segment_index)
             audio_id = audio_filename.replace('.wav', '')  # 用檔名作為 ID
             audio_path = self.audio_dir / audio_filename
             
-            # Get available models (use first available Hakka model)
+            # Get available models
             models = await self.get_models()
             voice_model = "broncitts"  # default model name
-            speaker_id = "hak-xi-TW-vs2-F01"  # 四縣女聲
-            language_id = "hak-xi-TW"  # 四縣
+            
+            # 使用傳入的 speaker 參數，如果沒有則使用默認值
+            if speaker and speaker.strip():
+                speaker_id = speaker.strip()
+                logger.info(f"Using provided speaker: {speaker_id}")
+            else:
+                speaker_id = "hak-xi-TW-vs2-F01"  # 默認四縣女聲
+                logger.info(f"No speaker provided, using default: {speaker_id}")
+            
+            # 根據 speaker_id 推斷 language_id
+            if 'hoi' in speaker_id.lower():
+                language_id = 'hak-hoi-TW'  # 海陸腔
+            elif 'thai' in speaker_id.lower():
+                language_id = 'hak-thai-TW'  # 大埔腔
+            else:
+                language_id = 'hak-xi-TW'   # 四縣腔
             
             if models and 'data' in models:
                 # Use the first available model data
                 model_data = models['data'][0]
                 voice_model = model_data.get('name', 'broncitts')
-                # Use first available speaker (四縣女聲優先)
+                
+                # 驗證 speaker_id 是否在可用的說話者列表中
                 if 'spk2id' in model_data and model_data['spk2id']:
                     available_speakers = model_data['spk2id']
-                    # 優先選擇四縣女聲
-                    if isinstance(available_speakers, dict):
-                        if 'hak-xi-TW-vs2-F01' in available_speakers:
-                            speaker_id = 'hak-xi-TW-vs2-F01'
-                            language_id = 'hak-xi-TW'
-                        else:
-                            speaker_id = list(available_speakers.keys())[0]
-                    elif isinstance(available_speakers, list):
-                        if 'hak-xi-TW-vs2-F01' in available_speakers:
-                            speaker_id = 'hak-xi-TW-vs2-F01'
-                            language_id = 'hak-xi-TW'
-                        else:
-                            speaker_id = available_speakers[0]
                     
-                    # 根據 speaker_id 推斷 language_id
-                    if 'hoi' in speaker_id:
-                        language_id = 'hak-hoi-TW'
-                    elif 'thai' in speaker_id:
-                        language_id = 'hak-thai-TW'
-                    else:
-                        language_id = 'hak-xi-TW'
+                    # 檢查指定的 speaker_id 是否可用
+                    speaker_available = False
+                    if isinstance(available_speakers, dict):
+                        speaker_available = speaker_id in available_speakers
+                    elif isinstance(available_speakers, list):
+                        speaker_available = speaker_id in available_speakers
+                    
+                    if not speaker_available:
+                        logger.warning(f"Requested speaker '{speaker_id}' not available in model.")
+                        logger.info(f"Available speakers: {available_speakers}")
+                        
+                        # 如果指定的說話者不可用，嘗試找到同腔調的替代者
+                        fallback_speaker = None
+                        if isinstance(available_speakers, dict):
+                            for available_speaker in available_speakers.keys():
+                                if 'hoi' in speaker_id.lower() and 'hoi' in available_speaker.lower():
+                                    fallback_speaker = available_speaker
+                                    break
+                                elif 'xi' in speaker_id.lower() and 'xi' in available_speaker.lower():
+                                    fallback_speaker = available_speaker
+                                    break
+                            
+                            if not fallback_speaker:
+                                fallback_speaker = list(available_speakers.keys())[0]
+                        elif isinstance(available_speakers, list):
+                            for available_speaker in available_speakers:
+                                if 'hoi' in speaker_id.lower() and 'hoi' in available_speaker.lower():
+                                    fallback_speaker = available_speaker
+                                    break
+                                elif 'xi' in speaker_id.lower() and 'xi' in available_speaker.lower():
+                                    fallback_speaker = available_speaker
+                                    break
+                            
+                            if not fallback_speaker:
+                                fallback_speaker = available_speakers[0]
+                        
+                        if fallback_speaker:
+                            logger.info(f"Using fallback speaker: {fallback_speaker}")
+                            speaker_id = fallback_speaker
+                            
+                            # 重新推斷 language_id
+                            if 'hoi' in speaker_id.lower():
+                                language_id = 'hak-hoi-TW'
+                            elif 'thai' in speaker_id.lower():
+                                language_id = 'hak-thai-TW'
+                            else:
+                                language_id = 'hak-xi-TW'
             
-            # 智能選擇 textType - 優先使用羅馬拼音格式
-            import re
-            
-            if romanization and romanization.strip():
-                # 如果有羅馬拼音，嘗試使用 roma 格式
-                text_type = "roma"
-                logger.info(f"Using 'roma' textType for romanization input")
-            elif re.search(r'[a-zA-Z]', cleaned_text):
-                # 如果文本包含英文字母，可能是羅馬拼音
-                text_type = "roma"
-                logger.info(f"Text contains romanization, using 'roma' textType")
-            elif re.search(r'[\u4e00-\u9fff]', cleaned_text):
-                # 包含中文字符，使用 common 格式
-                text_type = "common"
-                logger.info(f"Text contains Chinese characters, using 'common' textType")
-            else:
-                # 預設使用 roma 格式
-                text_type = "roma"
-                logger.info(f"Default to 'roma' textType")
+            # textType 已經在前面的邏輯中設定
+            logger.info(f"Using textType: {text_type}")
                 
             logger.info(f"Selected textType: {text_type}")
             
@@ -488,6 +764,233 @@ class TTSService:
         except Exception as e:
             logger.error(f"TTS generation failed: {e}")
             return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
+
+    async def _generate_segmented_audio(self, hakka_text: str, romanization: str, speaker: str = "", segment_index: int = None, script_name: str = "") -> Dict[str, Any]:
+        """處理長羅馬拼音的分段音檔生成和合併
+        
+        Args:
+            hakka_text: 客語文本
+            romanization: 清理後的羅馬拼音
+            speaker: 說話者ID
+            segment_index: 段落索引
+            script_name: 腳本名稱
+            
+        Returns:
+            合併後的音檔資訊
+        """
+        try:
+            # 分割羅馬拼音（使用音節數限制）
+            romanization_segments = self._split_romanization(romanization, max_length=150, max_syllables=8)
+            logger.info(f"Processing {len(romanization_segments)} romanization segments")
+            
+            # 生成最終音檔檔名
+            final_audio_filename = self._generate_readable_filename(hakka_text, speaker, segment_index, script_name, segment_index)
+            final_audio_path = self.audio_dir / final_audio_filename
+            final_audio_id = final_audio_filename.replace('.wav', '')
+            
+            # 為每個片段生成臨時音檔
+            temp_audio_paths = []
+            successful_segments = 0
+            
+            for i, segment_romanization in enumerate(romanization_segments):
+                # 生成臨時檔名
+                temp_filename = f"temp_{final_audio_id}_{i:03d}.wav"
+                temp_audio_path = self.audio_dir / temp_filename
+                
+                logger.info(f"Generating segment {i+1}/{len(romanization_segments)}: {len(segment_romanization)} chars")
+                
+                # 使用單個片段生成音檔
+                segment_result = await self._generate_single_segment_audio(
+                    segment_romanization, 
+                    str(temp_audio_path), 
+                    speaker
+                )
+                
+                if segment_result:
+                    temp_audio_paths.append(str(temp_audio_path))
+                    successful_segments += 1
+                    logger.info(f"✅ Segment {i+1} generated successfully")
+                else:
+                    logger.warning(f"❌ Segment {i+1} generation failed")
+            
+            if successful_segments == 0:
+                logger.error("All segments failed to generate, using fallback")
+                return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
+            
+            # 合併所有音檔
+            if len(temp_audio_paths) == 1:
+                # 只有一個片段，直接重命名
+                import shutil
+                shutil.move(temp_audio_paths[0], str(final_audio_path))
+                logger.info("Single segment, renamed to final audio file")
+            else:
+                # 多個片段，需要合併
+                merge_success = await self._merge_audio_files(temp_audio_paths, str(final_audio_path))
+                if not merge_success:
+                    logger.error("Audio merging failed, using fallback")
+                    return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
+            
+            # 計算時長
+            duration = max(10, len(hakka_text) * 0.5)
+            
+            logger.info(f"✅ Segmented TTS generation successful: {final_audio_filename} ({successful_segments}/{len(romanization_segments)} segments)")
+            
+            return {
+                "audio_id": final_audio_id,
+                "audio_path": str(final_audio_path),
+                "audio_url": f"/static/audio/{final_audio_filename}",
+                "duration": int(duration),
+                "text": hakka_text,
+                "romanization": romanization,
+                "voice_model": f"broncitts/{speaker}",
+                "segments_count": successful_segments,
+                "total_segments": len(romanization_segments)
+            }
+            
+        except Exception as e:
+            logger.error(f"Segmented TTS generation failed: {e}")
+            return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
+
+    async def _generate_single_segment_audio(self, romanization: str, output_path: str, speaker: str = "") -> bool:
+        """生成單個羅馬拼音片段的音檔
+        
+        Args:
+            romanization: 羅馬拼音片段（已清理且長度<=150）
+            output_path: 輸出音檔路徑
+            speaker: 說話者ID
+            
+        Returns:
+            是否生成成功
+        """
+        try:
+            # 確保已認證
+            if not self.headers:
+                await self.login()
+            
+            if not self.headers:
+                logger.error("TTS Authentication failed for segment generation")
+                return False
+            
+            # 取得模型資訊
+            models = await self.get_models()
+            voice_model = "broncitts"
+            
+            # 設定說話者
+            if speaker and speaker.strip():
+                speaker_id = speaker.strip()
+            else:
+                speaker_id = "hak-xi-TW-vs2-F01"  # 默認四縣女聲
+            
+            # 推斷 language_id
+            if 'hoi' in speaker_id.lower():
+                language_id = 'hak-hoi-TW'
+            elif 'thai' in speaker_id.lower():
+                language_id = 'hak-thai-TW'
+            else:
+                language_id = 'hak-xi-TW'
+            
+            if models and 'data' in models:
+                model_data = models['data'][0]
+                voice_model = model_data.get('name', 'broncitts')
+                
+                # 驗證說話者
+                if 'spk2id' in model_data and model_data['spk2id']:
+                    available_speakers = model_data['spk2id']
+                    
+                    speaker_available = False
+                    if isinstance(available_speakers, dict):
+                        speaker_available = speaker_id in available_speakers
+                    elif isinstance(available_speakers, list):
+                        speaker_available = speaker_id in available_speakers
+                    
+                    if not speaker_available:
+                        # 尋找替代說話者
+                        fallback_speaker = None
+                        if isinstance(available_speakers, dict):
+                            for available_speaker in available_speakers.keys():
+                                if 'xi' in speaker_id.lower() and 'xi' in available_speaker.lower():
+                                    fallback_speaker = available_speaker
+                                    break
+                            if not fallback_speaker:
+                                fallback_speaker = list(available_speakers.keys())[0]
+                        elif isinstance(available_speakers, list):
+                            for available_speaker in available_speakers:
+                                if 'xi' in speaker_id.lower() and 'xi' in available_speaker.lower():
+                                    fallback_speaker = available_speaker
+                                    break
+                            if not fallback_speaker:
+                                fallback_speaker = available_speakers[0]
+                        
+                        if fallback_speaker:
+                            speaker_id = fallback_speaker
+                            # 重新推斷 language_id
+                            if 'hoi' in speaker_id.lower():
+                                language_id = 'hak-hoi-TW'
+                            elif 'thai' in speaker_id.lower():
+                                language_id = 'hak-thai-TW'
+                            else:
+                                language_id = 'hak-xi-TW'
+            
+            # 準備 API 請求
+            synthesis_payload = {
+                "input": {
+                    "text": romanization,
+                    "textType": "roma"  # 使用羅馬拼音格式
+                },
+                "voice": {
+                    "model": voice_model,
+                    "languageCode": language_id,
+                    "name": speaker_id
+                },
+                "audioConfig": {
+                    "speakingRate": 1.0
+                },
+                "outputConfig": {
+                    "streamMode": 0,
+                    "shortPauseDuration": 150,
+                    "longPauseDuration": 300
+                }
+            }
+            
+            # 呼叫 TTS API
+            response = await self.client.post(
+                f'{self.base_url}/api/v1/tts/synthesize',
+                headers=self.headers,
+                json=synthesis_payload
+            )
+            
+            # 如果 roma 格式失敗，嘗試 common 格式
+            if response.status_code != 200:
+                logger.warning(f"Roma textType failed for segment, trying common textType")
+                synthesis_payload["input"]["textType"] = "common"
+                
+                response = await self.client.post(
+                    f'{self.base_url}/api/v1/tts/synthesize',
+                    headers=self.headers,
+                    json=synthesis_payload
+                )
+            
+            if response.status_code == 200:
+                # 保存音檔
+                with open(output_path, 'wb') as f:
+                    f.write(response.content)
+                
+                logger.debug(f"Segment audio saved: {output_path} ({len(response.content)} bytes)")
+                return True
+            else:
+                error_text = "Unknown error"
+                try:
+                    error_response = response.json()
+                    error_text = error_response.get('message', error_response)
+                except:
+                    error_text = response.text[:200]
+                
+                logger.error(f"Segment TTS API error {response.status_code}: {error_text}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"Single segment generation failed: {e}")
+            return False
     
     async def _generate_fallback_audio(self, hakka_text: str, romanization: str = "", speaker: str = "", segment_index: int = None, script_name: str = "") -> Dict[str, Any]:
         """Generate fallback audio when TTS API is unavailable"""

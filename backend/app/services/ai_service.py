@@ -764,7 +764,7 @@ class AIService:
 - 內容要引人入勝且真實
 - 包含文化背景和歷史脈絡
 - 結構清晰：開場白、主要內容、結語
-- 語速估算：每分鐘約 200-250 字
+- 語速估算：每分鐘約 50 字
 {current_content_section}
 
 {"個人興趣融入：" + request.interests if request.interests else ""}
