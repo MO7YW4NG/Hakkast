@@ -1,0 +1,599 @@
+{
+  "title": "客語播客 - 科技新聞",
+  "total_duration": 1889,
+  "segments": [
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_101.wav",
+          "duration": 10,
+          "text": "大家好，我係佳昀。"
+        }
+      ]
+    },
+    {
+      "speaker": "敏權",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_201.wav",
+          "duration": 10,
+          "text": "我係敏權，歡迎收聽哈客播哈客播。"
+        }
+      ]
+    },
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_301.wav",
+          "duration": 18,
+          "text": "今晡日會為大家帶來三則重要新聞，分我等共下看喔。大家對政府採購印象係僵化。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_302.wav",
+          "duration": 11,
+          "text": "英國-超過印象。佢簡化的雲端採購，𢯭手中小企。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_303.wav",
+          "duration": 16,
+          "text": "-十五還較用開放框架，分公共部門做得隨時引進最新科技，生活高效。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_304.wav",
+          "duration": 22,
+          "text": "英國-確實係典範轉移，佢不單淨簡化了流程，還較重要的係透過開放框架鼓勵了市場競爭和創新。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_305.wav",
+          "duration": 17,
+          "text": "敏權，你試著這係不係也係政府部門，提供了一個過有彈性的數位轉型路徑呢。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_306.wav",
+          "duration": 17,
+          "text": "我很期待看著這種模式怎樣在其他國家落地生根，還帶來更加多透明度和效率。"
+        }
+      ]
+    },
+    {
+      "speaker": "敏權",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_401.wav",
+          "duration": 10,
+          "text": "佳昀，你點出關鍵了哦。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_402.wav",
+          "duration": 20,
+          "text": "講著政府採購，頭擺係不係都試著像搞「大家來尋麻煩」，條框仔一千擔，根本䌈手䌈腳。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_403.wav",
+          "duration": 20,
+          "text": "這個-簡直係分政府部門開了外掛，分佢兜做得還較遽引進新的技術，不使再等天荒地老。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_404.wav",
+          "duration": 19,
+          "text": "我還恅著，這不單淨提供了彈性，也係培養政府的內部「靈活開發」文化有幾重要仔呢。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_405.wav",
+          "duration": 13,
+          "text": "還希望會也做得多看這種分科技哦「雲端跳舞」買的模式嗬。"
+        }
+      ]
+    },
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_501.wav",
+          "duration": 12,
+          "text": "敏權你講著「外掛」和「靈活開發」文化，我很有同感。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_502.wav",
+          "duration": 23,
+          "text": "這不單淨係採購流程的優化，還較係對公務體系一種深層的文化考驗，愛佢兜對「穩定」轉向「敏捷」。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_503.wav",
+          "duration": 31,
+          "text": "這背後需要大量的內部培訓和思維的轉變，甚至呢還係怎樣分這兜「雲端跳舞」的觀念，真正在逐隻辦公室根發芽，這正係盡無簡單的挑戰。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_504.wav",
+          "duration": 10,
+          "text": "會時常講工具係其次，關鍵還係人喔。"
+        }
+      ]
+    },
+    {
+      "speaker": "敏權",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_601.wav",
+          "duration": 16,
+          "text": "佳昀，你一語講破天機，講「人係關鍵」，這文化轉變確實係深層考驗。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_602.wav",
+          "duration": 18,
+          "text": "愛分慣勢「求穩」的公務體系相揇「敏捷」，這挑戰簡直比分象跳芭蕾舞還較難啦。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_603.wav",
+          "duration": 36,
+          "text": "我甚至在想，除忒培訓，係不係也愛從上而下給予更明確的願景和獎勵機制，分佢等真心感覺這兜「雲端舞步」不單淨新潮，還較做得解決實際問題、帶來成就感呢。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_604.wav",
+          "duration": 13,
+          "text": "怎樣講，有時節改變的動力，就囥在該兜細細仔的成功肚哦。"
+        }
+      ]
+    },
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_701.wav",
+          "duration": 15,
+          "text": "敏權點出願景和獎勵機制的關鍵，這確實係驅動內部轉型的核心動力。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_702.wav",
+          "duration": 23,
+          "text": "我認為，除了這兜激勵，還較重要的係建立一套支持敏捷文化的「治理框架」，確保改革不係蝲花一現。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_703.wav",
+          "duration": 24,
+          "text": "這包括了對創新容錯的制度設計，還過愛怎樣考量這兜「雲端跳舞」帶來的實際效益，不單淨係買金額定定。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_704.wav",
+          "duration": 22,
+          "text": "盡尾，所以全部都需要倚恃持續的領導力和系統性支持，正做得分這種敏捷思維正經深植公務體系。"
+        }
+      ]
+    },
+    {
+      "speaker": "敏權",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_801.wav",
+          "duration": 29,
+          "text": "佳昀，你有講著「創新容錯」，這簡直係公務體系最難的一關，怎樣講麼人想愛做「出頭鳥」，抑係分人貼著「實驗品」該標籤仔呢。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_802.wav",
+          "duration": 28,
+          "text": "我都在該想，係不係愛像遊戲公司共樣，有一隻「沙盒模式」分大家先試差，而且還能夠把「失敗經驗」變成公開表揚的獎項。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_803.wav",
+          "duration": 26,
+          "text": "另外，愛怎樣講到該兜詳細看硬數據的長官，分佢等看著「雲端跳舞」帶來的隱形效益和長期價值，這斯係門大學問呢。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_804.wav",
+          "duration": 11,
+          "text": "這不單止係技術問題，還較係信任同溝通的考驗呢。"
+        }
+      ]
+    },
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_901.wav",
+          "duration": 12,
+          "text": "我試著現代醫療係講無好資訊科技設備，正經很難行。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_902.wav",
+          "duration": 23,
+          "text": "你看英國英國國民健保這駁仔就擲大錢銀來升級硬體，這不單淨關係效率，更加直接影響病患照護品質。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_903.wav",
+          "duration": 11,
+          "text": "敏權你講著醫療資訊科技的重要性，我完全贊同。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_904.wav",
+          "duration": 23,
+          "text": "不過光有硬體還不夠，怎樣分這兜設備同複雜的醫療流程完美結合，還過分醫護人員正經上手，正係挑戰。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_905.wav",
+          "duration": 27,
+          "text": "尤其在醫療體系，敏感的病患資料更加係資安和隱私的頭號考量，這不係單淨買幾臺機器，插上電就做得搣好的事情了啦。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_906.wav",
+          "duration": 11,
+          "text": "盡尾，這兜都關係著病患的生命安全和照護品質啊。"
+        }
+      ]
+    },
+    {
+      "speaker": "敏權",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1001.wav",
+          "duration": 16,
+          "text": "佳昀，你講著資安和隱私，這根本係醫療資訊科技的「天花板級」挑戰。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1002.wav",
+          "duration": 26,
+          "text": "想看呢，這無像電商網站資料洩出來的，頂多係損失錢財，醫療資料一出不著抑係分人駭，該影響著不過寶貴生命啊。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1003.wav",
+          "duration": 29,
+          "text": "我甚至在想，這套系統到像一隻貼身保鑣，在關鍵的時節提供黏時做不得的協助，同時又愛隱形到醫護人員做得乎感受不著佢的存在。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1004.wav",
+          "duration": 15,
+          "text": "正經，這不單淨係科技問題，過較係建立信任同守護生命的藝術啊。"
+        }
+      ]
+    },
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1101.wav",
+          "duration": 21,
+          "text": "敏權講出了醫療資訊科技的終極的考驗，佢不單淨係技術的角力哦，還較係信任和生命的保衛戰。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1102.wav",
+          "duration": 30,
+          "text": "愛分系統看起來做得像「貼身保鑣」般精準守護，又愛能夠「隱形」不會影響效率，有關鍵愛和資安意識深植到所有的醫護人員心肝肚。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1103.wav",
+          "duration": 20,
+          "text": "這需要的不單淨係硬體的防禦，還較係一套嚴密還過繼續進化的「資安文化」和應變機制。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1104.wav",
+          "duration": 13,
+          "text": "係啊，這場戰打贏了，正做得正經守護病人的希望和未來。"
+        }
+      ]
+    },
+    {
+      "speaker": "敏權",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1201.wav",
+          "duration": 25,
+          "text": "佳昀，你有講著「資安文化」愛深植人心，這正經像在醫護人員的超時工作裡背，再過塞一隻「隱形任務」落去。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1202.wav",
+          "duration": 25,
+          "text": "我試著這不單淨係訓練，過像係一種「行為藝術」，愛分佢兜在分秒必爭的急診室裡背，也做得不經意實踐資安。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1203.wav",
+          "duration": 20,
+          "text": "我會像搞遊戲共樣無，分佢兜做一個資安的目標，就有一隻「護理師之星」的成就解鎖啊。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1204.wav",
+          "duration": 16,
+          "text": "怎樣講，愛分大家歡喜甘願在資安守門員，得分佢等看著其中的「彩卵」。"
+        }
+      ]
+    },
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1301.wav",
+          "duration": 30,
+          "text": "敏權點出「護理師之星」這成就解鎖的確能激發資安意識，不過愛將資安真正昇華為「行為藝術」，我認為重點在系統的「無感」設計。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1302.wav",
+          "duration": 17,
+          "text": "這不係單淨靠獎勵，係分最安全的行為，同時也係最便利、最直觀的操作路徑。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1303.wav",
+          "duration": 22,
+          "text": "我兜需要對源頭同資安融入醫療資訊系統的架構裡肚，分佢像空氣樣仔無哪在，嗄無造成另外的負擔。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1304.wav",
+          "duration": 16,
+          "text": "這正做得分醫護人員在高速運轉之下，也做得自然而然的成為資安守門員。"
+        }
+      ]
+    },
+    {
+      "speaker": "敏權",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1401.wav",
+          "duration": 19,
+          "text": "佳昀，你講的「無感設計」我很認同，這根本就係同資安變做一種「醫療氣功」嘛嗬。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1402.wav",
+          "duration": 17,
+          "text": "分醫護人員很自然就行在最安全的流程頂高，就像分一股神秘力量𢱤等行啊。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1403.wav",
+          "duration": 23,
+          "text": "不過我想愛問，很資安正經完美到『隱形』時，會顛倒分人忒樂線無，添放核佢其實一直在背後的努力。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1404.wav",
+          "duration": 16,
+          "text": "這就像有了安全氣管，你就不會繫安全帶共樣，會變到另外一隻挑戰無啊。"
+        }
+      ]
+    },
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1501.wav",
+          "duration": 27,
+          "text": "講著人工智慧，大家可能試著係未來，不過英國這份報告指出，佢對公共部門潛力很大，逐年做得省著有四百五十億英鎊。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1502.wav",
+          "duration": 19,
+          "text": "不過怎樣分人工智慧不單淨停留在試點，正經為公務員和民眾所用，係佢兜進前的挑戰。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1503.wav",
+          "duration": 17,
+          "text": "敏權點出來了人工智慧對試點到普及的「最尾一哩路」，這挑戰確實係很大。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1504.wav",
+          "duration": 25,
+          "text": "愛分人工智慧在公共部門發揮四百五十億英鎊的潛力，不單止係技術的問題，還較係數據治理同流程再造的考驗。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1505.wav",
+          "duration": 25,
+          "text": "會愛去想啊，仰了啊人工智慧的導入像我兜進前講的「無感設計」共樣，自然融入公務員的日常作業，減少排斥感。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1506.wav",
+          "duration": 19,
+          "text": "怎樣講，過較好的人工智慧，若係無法度同現有系統同人力順利協作，都係空中樓閣。"
+        }
+      ]
+    },
+    {
+      "speaker": "敏權",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1601.wav",
+          "duration": 27,
+          "text": "佳昀，你有講著人工智慧的「無感設計」，我腦中黏時浮現公務員食著咖啡，過了人工智慧就恬恬仔同文件分類好了的畫面。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1602.wav",
+          "duration": 17,
+          "text": "不過我想，除了無感，人工智慧在公共服務裡肚還愛有一息仔「人味兒」嗬。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1603.wav",
+          "duration": 24,
+          "text": "怎樣講無像醫療資訊科技係守護生命，政府人工智慧影響的係逐個公民的權益，佢做的決定做得解釋、分信任。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1604.wav",
+          "duration": 23,
+          "text": "無會像人工智慧考駕照，結果大家都不知做麼的會過也係無過，直接分人工智慧分你「發配邊疆」了呢。"
+        }
+      ]
+    },
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1701.wav",
+          "duration": 30,
+          "text": "敏權提出的「人味兒」確實切中核心，尤其在公共服務領域，人工智慧決策的透明度還有做得解釋性，遠比純粹的「無感設計」來到關鍵。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1702.wav",
+          "duration": 22,
+          "text": "怎樣講，醫療資訊科技追求的係效率和安全，政府人工智慧係牽涉著公民權益的公平性和信任的基礎。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1703.wav",
+          "duration": 28,
+          "text": "會俚需要的係「做得解釋性人工智慧」，或者至少有明確的「人機協作」機制，保證人工智慧的判斷邏輯做得分人理解和審核。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1704.wav",
+          "duration": 28,
+          "text": "啊無，人工智慧不單淨可能分公民感著「發配邊疆」，還有可能會侵蝕政府的公信力，這會係比任何效率損失都還較嚴重的挑戰。"
+        }
+      ]
+    },
+    {
+      "speaker": "敏權",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1801.wav",
+          "duration": 36,
+          "text": "佳昀，你講著「人機協作」和「做得解釋性人工智慧」，這分我想像，以後政府仔人工智慧會變做一個有證照無「人工智慧律師」，逐擺判決都愛附一份長的解釋函。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1802.wav",
+          "duration": 31,
+          "text": "不過我和你老實講，愛民眾看得著該兜複雜的演算法來判斷邏輯，無定著比考公務員還較難，會總做不得期待逐儕人就去讀人工智慧博士啦。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_1803.wav",
+          "duration": 30,
+          "text": "我試著重點應該係建立一套「負責機制」，分大家知盡尾還係有人做得為人工智慧的決策負責，不係讓人工智慧成為免死金牌，你試著呢。"
+        }
+      ]
+    },
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1901.wav",
+          "duration": 24,
+          "text": "敏權提著「有人負責」這點，確實切中肯定，怎樣講人工智慧係講成為免死金牌，政府公信力將會蕩然無存。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1902.wav",
+          "duration": 31,
+          "text": "我等講的「做得解釋性」，重點不係分公民理解複雜的演算法，係做得清楚知人工智慧做出特定判斷的「理由和依據」，就像法庭的判決講理。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1903.wav",
+          "duration": 27,
+          "text": "這需要建立一套完善的審查和申訴機制，像係獨立的人工智慧倫理委員會，確保決策邏輯符合公共利益還過做得分人挑戰。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_1904.wav",
+          "duration": 11,
+          "text": "盡尾，這有關技術的難，係公民對政府的信任基礎。"
+        }
+      ]
+    },
+    {
+      "speaker": "敏權",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_2001.wav",
+          "duration": 23,
+          "text": "佳昀，你有講著「獨立的人工智慧倫理委員會」，這就像分人工智慧請了一個「道德陪審團」，概念蓋會。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_2002.wav",
+          "duration": 22,
+          "text": "不過我在該想，這兜委員會有一日也變做無「人工智慧決策的受害者」，分無窮無盡的申訴案件蔭水。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_2003.wav",
+          "duration": 12,
+          "text": "總講愛分大眾信任人工智慧，淨靠事後補救可能還不夠。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_2004.wav",
+          "duration": 23,
+          "text": "會係不係愛對人工智慧設計的一開始，就考慮怎樣植入兜仔啊「良心」程式碼，不係等佢做不著正來處罰。"
+        }
+      ]
+    },
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_2101.wav",
+          "duration": 19,
+          "text": "今晡日我等深入探討了在數位轉型浪潮很中，公共部門採購和企業資訊科技服務的時行。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_2102.wav",
+          "duration": 23,
+          "text": "從愛怎樣推動效率和價值，到和兩位專家分享的實務觀察，會俚看著策略性的合作和專業知識的重要性。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_2103.wav",
+          "duration": 24,
+          "text": "這不單淨係技術的導入，更加係怎樣建立穩固的夥伴關係，來應對緊來緊複雜的挑戰還過創造持續的公共效益。"
+        }
+      ]
+    },
+    {
+      "speaker": "敏權",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_2201.wav",
+          "duration": 10,
+          "text": "佳昀的總結正式非常精闢，同核心都點出來了。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_2202.wav",
+          "duration": 27,
+          "text": "我試著，這事件背後其實也提醒了我等，在面對緊來緊遽變動的時節，還較需要多一份換位思考，愛了解無共樣群體的聲。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXM_2203.wav",
+          "duration": 10,
+          "text": "怎樣講，人才係所有政策的核心。"
+        }
+      ]
+    },
+    {
+      "speaker": "佳昀",
+      "text_type": "客語文本",
+      "audio_files": [
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_2301.wav",
+          "duration": 10,
+          "text": "感謝你收聽本集的《在大空該時節》。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_2302.wav",
+          "duration": 17,
+          "text": "今晡日會對三隻看起來獨立，實則息把關的新聞很中，共下感受了世界的脈動。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_2303.wav",
+          "duration": 40,
+          "text": "不論係科技浪潮的席捲來咧，社會議題深層的挑戰，抑係日常生活很中微觀的變革，不時就在該提醒我等，身處這個快速變遷的時代，有敏銳的觀察力和深刻的思考，係幾重要仔啊。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_2304.wav",
+          "duration": 33,
+          "text": "我衷心希望今晡日的分享同討論，做得為你帶來一息啟發，你也感受著，在資訊的洪流很中，我等不係孤栖，係作為共同的參與者和陪伴者，共下前行。"
+        },
+        {
+          "file": "/static/audio/podcast_script_technology_news_3articles_SXF_2305.wav",
+          "duration": 12,
+          "text": "期待我等下禮拜空中再會，祝你有美好加很省思的一日。"
+        }
+      ]
+    }
+  ]
+}

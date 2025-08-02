@@ -587,7 +587,7 @@ class TTSService:
                 logger.info(f"No romanization provided, using cleaned hakka text: {cleaned_text}")
             
             # 生成可讀性好的檔名
-            audio_filename = self._generate_readable_filename(hakka_text, speaker, segment_index, script_name, segment_index)
+            audio_filename = self._generate_readable_filename(hakka_text, speaker, None, script_name, segment_index)
             audio_id = audio_filename.replace('.wav', '')  # 用檔名作為 ID
             audio_path = self.audio_dir / audio_filename
             
@@ -784,7 +784,7 @@ class TTSService:
             logger.info(f"Processing {len(romanization_segments)} romanization segments")
             
             # 生成最終音檔檔名
-            final_audio_filename = self._generate_readable_filename(hakka_text, speaker, segment_index, script_name, segment_index)
+            final_audio_filename = self._generate_readable_filename(hakka_text, speaker, None, script_name, segment_index)
             final_audio_path = self.audio_dir / final_audio_filename
             final_audio_id = final_audio_filename.replace('.wav', '')
             
@@ -996,7 +996,7 @@ class TTSService:
         """Generate fallback audio when TTS API is unavailable"""
         try:
             # 生成可讀性好的檔名
-            audio_filename = self._generate_readable_filename(hakka_text, speaker, segment_index, script_name, segment_index)
+            audio_filename = self._generate_readable_filename(hakka_text, speaker, None, script_name, segment_index)
             audio_id = audio_filename.replace('.wav', '')  # 用檔名作為 ID
             audio_path = self.audio_dir / audio_filename
             

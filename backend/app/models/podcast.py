@@ -59,3 +59,6 @@ class PodcastScript(BaseModel):
     title: str
     hosts: List[str]
     content: List[PodcastScriptContent]
+
+# 別名，為了向後兼容
+PodcastSegment = PodcastScriptContent

@@ -102,6 +102,7 @@ class PodcastAudioManager:
             script_file = Path(script_file)
         
         script_path = script_file
+        script_name = script_path.stem  # 提取腳本名稱，用於檔名生成
         
         if not script_path.exists():
             logger.error(f"找不到播客腳本檔案 {script_path}")
@@ -163,10 +164,24 @@ class PodcastAudioManager:
                     for j, segment_text in enumerate(segments, 1):
                         logger.info(f"    段落 {j}/{len(segments)}: {segment_text}")
                         
+                        # 計算段落索引：例如 101, 102, 201, 202...
+                        segment_index = i * 100 + j
+                        
+                        # 根據說話者確定語音模型
+                        if speaker == "佳昀":
+                            speaker_id = "hak-xi-TW-vs2-F01"  # 四縣女聲
+                        elif speaker == "敏權":
+                            speaker_id = "hak-xi-TW-vs2-M01"  # 四縣男聲
+                        else:
+                            speaker_id = "hak-xi-TW-vs2-F01"  # 默認女聲
+                        
                         try:
                             result = await self.tts_service.generate_hakka_audio(
                                 hakka_text=segment_text,
-                                romanization=""
+                                romanization="",
+                                speaker=speaker_id,
+                                segment_index=segment_index,
+                                script_name=script_name
                             )
                             
                             if result.get('audio_id') and result.get('voice_model') != 'fallback':
