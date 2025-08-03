@@ -5,6 +5,10 @@ from typing import Optional, Dict, Any
 import httpx
 from pathlib import Path
 from app.core.config import settings
+import google.genai as genai
+from google.genai import types
+import wave
+
 
 logger = logging.getLogger(__name__)
 
@@ -410,75 +414,25 @@ class TTSService:
         logger.info(f"Segment character counts: {[len(s) for s in segments]}")
         return segments
 
-    async def _merge_audio_files(self, audio_paths: list[str], output_path: str) -> bool:
-        """合併多個音檔成一個完整的音檔
-        
-        Args:
-            audio_paths: 要合併的音檔路徑列表
-            output_path: 輸出音檔路徑
-            
-        Returns:
-            是否合併成功
-        """
-        try:
-            import wave
-            import struct
-            
-            # 合併的音頻數據
-            merged_frames = []
-            sample_rate = 16000  # TTS API 預設採樣率
-            sample_width = 2     # 16-bit
-            channels = 1         # Mono
-            
-            for audio_path in audio_paths:
-                if not os.path.exists(audio_path):
-                    logger.warning(f"Audio file not found: {audio_path}")
-                    continue
-                
-                try:
-                    with wave.open(audio_path, 'rb') as wav_file:
-                        frames = wav_file.readframes(wav_file.getnframes())
-                        merged_frames.append(frames)
-                        
-                        # 使用第一個檔案的參數作為基準
-                        if not merged_frames or len(merged_frames) == 1:
-                            sample_rate = wav_file.getframerate()
-                            sample_width = wav_file.getsampwidth()
-                            channels = wav_file.getnchannels()
-                            
-                except Exception as e:
-                    logger.error(f"Failed to read audio file {audio_path}: {e}")
-                    continue
-            
-            if not merged_frames:
-                logger.error("No valid audio files to merge")
-                return False
-            
-            # 寫入合併後的音檔
-            with wave.open(output_path, 'wb') as output_wav:
-                output_wav.setnchannels(channels)
-                output_wav.setsampwidth(sample_width)
-                output_wav.setframerate(sample_rate)
-                
-                for frames in merged_frames:
-                    output_wav.writeframes(frames)
-            
-            logger.info(f"Successfully merged {len(merged_frames)} audio files into {output_path}")
-            
-            # 清理臨時檔案
-            for audio_path in audio_paths:
-                try:
-                    if os.path.exists(audio_path) and audio_path != output_path:
-                        os.remove(audio_path)
-                        logger.debug(f"Cleaned up temporary file: {audio_path}")
-                except Exception as e:
-                    logger.warning(f"Failed to clean up temporary file {audio_path}: {e}")
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"Audio merging failed: {e}")
-            return False
+    async def _merge_audio_files(self, audio_paths, output_path):
+        import wave
+        data = []
+        params = None
+        for path in audio_paths:
+            if not os.path.exists(path):
+                print(f"Audio file not found: {path}")
+                continue
+            with wave.open(path, 'rb') as wf:
+                if params is None:
+                    params = wf.getparams()
+                data.append(wf.readframes(wf.getnframes()))
+        if params is None:
+            print("沒有可合併的音檔")
+            return
+        with wave.open(output_path, 'wb') as out:
+            out.setparams(params)
+            for d in data:
+                out.writeframes(d)
 
     def _generate_readable_filename(self, text: str, speaker: str = "", index: int = None, script_name: str = "", segment_index: int = None) -> str:
         """生成可讀性好的音檔檔名
@@ -508,24 +462,25 @@ class TTSService:
         # 說話者簡寫
         speaker_short = ""
         if speaker:
-            if "xi" in speaker.lower() and ("F01" in speaker or "f" in speaker.lower()):
-                speaker_short = "SXF"  # 四縣女聲 (佳昀)
+            if speaker in ["SXM", "SXF", "HLM", "HLF", "UNK"]:
+                speaker_short = speaker
+            elif "xi" in speaker.lower() and ("F01" in speaker or "f" in speaker.lower()):
+                speaker_short = "SXF"
             elif "xi" in speaker.lower() and ("M01" in speaker or "m" in speaker.lower()):
-                speaker_short = "SXM"  # 四縣男聲 (敏權)
+                speaker_short = "SXM"
             elif "hoi" in speaker.lower() and ("F01" in speaker or "f" in speaker.lower()):
-                speaker_short = "HLF"  # 海陸女聲 (佳昀)
+                speaker_short = "HLF"
             elif "hoi" in speaker.lower() and ("M01" in speaker or "m" in speaker.lower()):
-                speaker_short = "HLM"  # 海陸男聲 (敏權)
+                speaker_short = "HLM"
             elif "thai" in speaker.lower():
-                speaker_short = "TPF"  # 大埔女聲
+                speaker_short = "TPF"
             else:
-                # 從speaker字符串中提取簡短標識
                 if "F" in speaker.upper():
                     speaker_short = "F"
                 elif "M" in speaker.upper():
                     speaker_short = "M"
                 else:
-                    speaker_short = "UNK"  # 未知說話者
+                    speaker_short = "UNK"
         
         # 生成序號：腳本序號_段落序號
         if segment_index is not None:
@@ -809,9 +764,9 @@ class TTSService:
                 if segment_result:
                     temp_audio_paths.append(str(temp_audio_path))
                     successful_segments += 1
-                    logger.info(f"✅ Segment {i+1} generated successfully")
+                    logger.info(f"Segment {i+1} generated successfully")
                 else:
-                    logger.warning(f"❌ Segment {i+1} generation failed")
+                    logger.warning(f"Segment {i+1} generation failed")
             
             if successful_segments == 0:
                 logger.error("All segments failed to generate, using fallback")
@@ -833,7 +788,7 @@ class TTSService:
             # 計算時長
             duration = max(10, len(hakka_text) * 0.5)
             
-            logger.info(f"✅ Segmented TTS generation successful: {final_audio_filename} ({successful_segments}/{len(romanization_segments)} segments)")
+            logger.info(f"Segmented TTS generation successful: {final_audio_filename} ({successful_segments}/{len(romanization_segments)} segments)")
             
             return {
                 "audio_id": final_audio_id,
@@ -1092,3 +1047,37 @@ class TTSService:
     async def close(self):
         """Close the HTTP client"""
         await self.client.aclose()
+
+    #gemini TTS
+    async def generate_gemini_tts(self, text: str, output_path: str) -> str:
+        api_key = getattr(settings, "GEMINI_API_KEY", None)
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY not set in environment or settings")
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash-preview-tts",
+            contents=text,
+            config=types.GenerateContentConfig(
+                response_modalities=["AUDIO"],
+                speech_config=types.SpeechConfig(
+                    voice_config=types.VoiceConfig(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                            voice_name="Despina"
+                        )
+                    )
+                ),
+            )
+        )
+        data = response.candidates[0].content.parts[0].inline_data.data
+        print(f"Gemini 回傳音訊長度: {len(data)} bytes")
+        # wave 包裝成 WAV 檔案
+        self._pcm_to_wav(data, output_path, sample_rate=24000)
+        return output_path
+
+    def _pcm_to_wav(self, pcm_data: bytes, wav_path: str, sample_rate: int = 24000):
+        import wave
+        with wave.open(wav_path, 'wb') as wf:
+            wf.setnchannels(1)
+            wf.setsampwidth(2)
+            wf.setframerate(sample_rate)
+            wf.writeframes(pcm_data)
