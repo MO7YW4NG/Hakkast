@@ -111,6 +111,9 @@ class PodcastAudioManager:
         with open(script_path, 'r', encoding='utf-8') as f:
             podcast_data = json.load(f)
         
+        # 提取播客標題，如果沒有則使用預設標題
+        podcast_title = podcast_data.get('title', '客語播客')
+        
         logger.info("=== 客語播客 TTS 音檔生成 ===")
         
         try:
@@ -133,6 +136,7 @@ class PodcastAudioManager:
                 speaker = segment.get('speaker', 'Unknown')
                 hakka_text = segment.get('hakka_text', '')
                 original_text = segment.get('text', '')
+                romanization = segment.get('romanization', '')  # 從腳本中獲取羅馬拼音
                 
                 logger.info(f"--- 處理段落 {i} ({speaker}) ---")
                 
@@ -161,6 +165,28 @@ class PodcastAudioManager:
                     segment_results = []
                     segment_success = 0
                     
+                    # 分割羅馬拼音以匹配文本段落
+                    romanization_segments = []
+                    if romanization and romanization.strip():
+                        # 嘗試按照文本段落數量分割羅馬拼音
+                        romanization_parts = romanization.split()
+                        if len(romanization_parts) >= len(segments):
+                            # 平均分配羅馬拼音到各個段落
+                            parts_per_segment = len(romanization_parts) // len(segments)
+                            for seg_idx in range(len(segments)):
+                                start_idx = seg_idx * parts_per_segment
+                                if seg_idx == len(segments) - 1:  # 最後一個段落取剩下的所有部分
+                                    romanization_segments.append(' '.join(romanization_parts[start_idx:]))
+                                else:
+                                    end_idx = start_idx + parts_per_segment
+                                    romanization_segments.append(' '.join(romanization_parts[start_idx:end_idx]))
+                        else:
+                            # 如果羅馬拼音太短，就為每個段落生成空的羅馬拼音（讓TTS自動產生）
+                            romanization_segments = [''] * len(segments)
+                    else:
+                        # 如果沒有羅馬拼音，就使用空字符串
+                        romanization_segments = [''] * len(segments)
+                    
                     for j, segment_text in enumerate(segments, 1):
                         logger.info(f"    段落 {j}/{len(segments)}: {segment_text}")
                         
@@ -175,10 +201,13 @@ class PodcastAudioManager:
                         else:
                             speaker_id = "hak-xi-TW-vs2-F01"  # 默認女聲
                         
+                        # 使用對應的羅馬拼音段落
+                        segment_romanization = romanization_segments[j - 1] if j - 1 < len(romanization_segments) else ''
+                        
                         try:
                             result = await self.tts_service.generate_hakka_audio(
                                 hakka_text=segment_text,
-                                romanization="",
+                                romanization=segment_romanization,  # 使用對應的羅馬拼音片段
                                 speaker=speaker_id,
                                 segment_index=segment_index,
                                 script_name=script_name
@@ -237,7 +266,7 @@ class PodcastAudioManager:
             # 生成播放列表 (使用絕對路徑)
             playlist_file = Path(__file__).parent.parent / "static" / "audio" / "podcast_playlist.json"
             playlist_data = {
-                'title': '客語播客 - 科技新聞',
+                'title': podcast_title,
                 'total_duration': total_duration,
                 'segments': []
             }
@@ -251,13 +280,24 @@ class PodcastAudioManager:
                 
                 for seg in result['segments']:
                     if seg.get('audio_id'):
-                        segment_info['audio_files'].append({
+                        audio_file_info = {
                             'file': f"/static/audio/{Path(seg['audio_path']).name}",
                             'duration': seg.get('duration', 0),
-                            'text': seg.get('text', '')
-                        })
+                            'text': seg.get('text', ''),
+                        }
+                        
+                        # 添加羅馬拼音資訊（如果有的話）
+                        if seg.get('romanization'):
+                            audio_file_info['romanization'] = seg.get('romanization')
+                        
+                        # 添加語音模型資訊
+                        if seg.get('voice_model'):
+                            audio_file_info['voice_model'] = seg.get('voice_model')
+                            
+                        segment_info['audio_files'].append(audio_file_info)
                 
-                playlist_data['segments'].append(segment_info)
+                if segment_info['audio_files']:  # 只添加有音檔的段落
+                    playlist_data['segments'].append(segment_info)
             
             with open(playlist_file, 'w', encoding='utf-8') as f:
                 json.dump(playlist_data, f, ensure_ascii=False, indent=2)

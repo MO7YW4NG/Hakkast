@@ -466,7 +466,7 @@ async def generate_and_merge_podcast_audio(podcast_script, dialect, script_name,
         if should_merge:
             print("正在將所有說話者音檔合併為完整播客...")
             
-            # 直接進行完整播客合併
+            # 使用 PodcastAudioManager 的現有功能進行多說話者合併
             success = await merge_all_speakers(script_name, available_speakers, manager)
             
             if success:
@@ -483,21 +483,20 @@ async def generate_and_merge_podcast_audio(podcast_script, dialect, script_name,
 
 async def merge_all_speakers(script_name, available_speakers, manager):
     """將多個說話者的音檔按順序合併為單一完整播客
+    使用 PodcastAudioManager 的現有方法來實現多說話者合併
     
     Args:
         script_name: 腳本名稱
         available_speakers: [(speaker_code, file_count), ...] 
         manager: PodcastAudioManager 實例
     """
-    import subprocess
-    from pathlib import Path
-    
     try:
         print("正在準備多說話者合併...")
         
         # 收集所有說話者的音檔，按照 segment_index 排序
         all_files = []
         for code, count in available_speakers:
+            # 使用 PodcastAudioManager 的方法獲取音檔
             files = manager.get_organized_files(script_name, code)
             for file in files:
                 # 提取段落序號進行排序
@@ -515,13 +514,28 @@ async def merge_all_speakers(script_name, available_speakers, manager):
         
         print(f"準備合併 {len(sorted_files)} 個音檔...")
         
-        # 創建合併清單
+        # 創建合併清單和輸出檔案路徑
         concat_file = manager.audio_dir / f"{script_name}_all_speakers_concat.txt"
         output_file = manager.audio_dir / f"{script_name}_complete_all_speakers.wav"
         
+        # 使用 PodcastAudioManager 的方法創建 FFmpeg 合併清單
         manager.create_ffmpeg_concat_file(sorted_files, concat_file)
         
-        # 使用 FFmpeg 合併
+        # 使用與 PodcastAudioManager.merge_audio_files 相同的邏輯
+        import subprocess
+        
+        # 檢查是否安裝了 FFmpeg
+        try:
+            subprocess.run(['ffmpeg', '-version'], capture_output=True, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print("❌ FFmpeg 未安裝。請先安裝 FFmpeg 來合併音檔")
+            print("安裝方法：")
+            print("1. 下載 FFmpeg: https://ffmpeg.org/download.html")
+            print("2. 或使用 Chocolatey: choco install ffmpeg")
+            print("3. 或使用 winget: winget install Gyan.FFmpeg")
+            return False
+        
+        # 使用 FFmpeg 合併（與 PodcastAudioManager 相同的命令）
         cmd = [
             'ffmpeg',
             '-f', 'concat',
@@ -533,6 +547,8 @@ async def merge_all_speakers(script_name, available_speakers, manager):
         ]
         
         print("執行多說話者音檔合併...")
+        print(f"FFmpeg 命令: {' '.join(cmd)}")
+        
         result = subprocess.run(cmd, capture_output=True, text=True)
         
         if result.returncode == 0:
@@ -551,11 +567,14 @@ async def merge_all_speakers(script_name, available_speakers, manager):
                 return False
         else:
             print(f"❌ FFmpeg 合併失敗:")
-            print(f"錯誤: {result.stderr}")
+            print(f"stdout: {result.stdout}")
+            print(f"stderr: {result.stderr}")
             return False
             
     except Exception as e:
         print(f"❌ 多說話者合併過程發生錯誤: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return False
 
 async def use_integrated_audio_manager(script_file_path):
