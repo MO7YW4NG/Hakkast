@@ -54,138 +54,6 @@ class PydanticAIService:
         else:
             raise ValueError("需要設定 TWCC_API_KEY + TWCC_BASE_URL 或 GEMINI_API_KEY")
         
-        # 創建內容分析 Agent
-        self.content_analyzer = Agent(
-            model=self.model,
-            result_type=ContentAnalysis,
-            system_prompt="""
-            你是一位專業的內容分析師，專門分析播客主題和受眾需求。
-            分析用戶提供的主題，判斷：
-            1. 主題類別（科技、娛樂、教育、新聞等）
-            2. 複雜度等級（初學者、中級、高級）
-            3. 目標受眾
-            4. 推薦的播客風格
-            5. 內容時效性
-            
-            請用繁體中文回應，並提供專業的分析結果。
-            """
-        )
-        
-        # 創建腳本生成 Agent
-        self.script_generator = Agent(
-            model=self.model,
-            result_type=PydanticPodcastScript,
-            system_prompt="""
-            你是一位專業的播客腳本創作者，專門創作雙主持人深度對話形式的新聞分析播客。
-
-            腳本格式要求：
-            1. 標題：準確且吸引人，反映新聞核心議題
-            2. 雙主持人：主持人A和主持人B進行深入對話分析
-            3. 完整對話腳本特色：
-               - 開場：介紹節目和當天主題
-               - 新聞背景：詳細介紹新聞事件
-               - 深度分析：從多角度分析事件意義和影響
-               - 地緣政治：分析背後的國際關係和戰略考量
-               - 經濟層面：討論貿易、經濟合作等議題
-               - 總結：歸納重點和後續發展預測
-               - 結尾：感謝收聽和預告
-            4. 對話風格：
-               - 專業深入但通俗易懂
-               - 一問一答，互相補充和深入
-               - 每段對話都有實質內容，避免空洞
-               - 包含具體的數據、事實和背景資訊
-               - 每段對話前標註說話者（🎙️主持人A: / 🎙️主持人B:）
-            5. 內容深度要求：
-               - 分析新聞背後的深層原因
-               - 討論地緣政治和戰略意義
-               - 解釋複雜的國際關係
-               - 提供多角度的觀點
-               - 預測可能的後續發展
-            6. 長度要求：生成足夠長的對話內容，確實符合目標時長（例如三篇新聞共15分鐘，每篇約5分鐘）
-            7. 串接要求：三篇新聞請以自然的對話方式串接，主持人能順暢地從一則新聞帶到下一則新聞，讓聽眾感覺主題連貫。
-            參考優質對話風格：
-            - 不只陳述事實，還要分析原因和影響
-            - 用"沒錯，而且..."、"對，但有趣的是..."等過渡語
-            - 包含"從新聞來看..."、"這背後可不單純..."等分析性語句
-            - 總結時用"我們總結一下今天的重點..."
-            請用繁體中文撰寫，風格專業且有深度。
-            """
-        )
-        
-        # 新增摘要 agent
-        self.summarizer = Agent(
-            model=self.model,
-            result_type=str,
-            system_prompt="""
-            你是一位專業新聞摘要員，只產生純文字摘要，不要主持人、對話或虛構內容。
-            請用繁體中文，濃縮新聞重點，字數約500字。
-            """
-        )
-        
-        # 創建對話 Agent
-        self.dialogue_agent = Agent(
-            model=self.model,
-            result_type=str,
-            system_prompt="""
-            你是專業播客主持人，請根據上下文和新聞摘要，產生一段自然、深入的對話回應。
-            請用繁體中文，風格專業且有深度。
-            """
-        )
-        
-        # 創建英文轉羅馬拼音 Agent
-        self.english_romanizer = Agent(
-            model=self.model,
-            result_type=str,
-            system_prompt="""
-            你是一位專業的語音轉換專家，專門處理混合中英文文本中的英文單字轉換。
-
-            任務：將文本中的英文單字轉換成帶數字標調的羅馬拼音格式，以便客家話TTS系統正確發音。
-
-            轉換規則：
-            1. 英文單字轉換成近似的羅馬拼音發音
-            2. 保持中文部分完全不變
-            3. 每個音節必須添加數字標調（24表示中平調，55表示高平調，11表示低平調，2表示上聲，31表示去聲）
-            4. 使用空格分隔每個音節
-            5. 常見英文單字使用標準化音譯
-
-            範例轉換：
-            - Apple → a24 pu24 er24
-            - Google → gu24 ge24 er24
-            - Facebook → fei24 si24 bu24 ke24
-            - Microsoft → mai24 ke24 ro24 so24 fu24 te24
-            - iPhone → ai24 feng24
-            - ChatGPT → cha24 te24 ji24 pi24 ti24
-            - YouTube → you24 tu24 be24
-            - Instagram → yin24 si24 ta24 ge24 lan24 mu24
-            - Android → an24 zhuo24 yi24 de24
-            - OpenAI → o24 pen24 ai24
-
-            音調選擇建議：
-            - 一般情況使用24（中平調）
-            - 重要品牌名稱的重音音節可使用55（高平調）
-            - 結尾音節可使用11（低平調）
-
-            請直接輸出轉換後的完整文本，保持原有的句子結構和標點符號。
-            """
-        )
-
-    async def analyze_content_requirements(self, topic: str, tone: str = "casual") -> ContentAnalysis:
-        """分析內容需求和受眾"""
-        try:
-            result = await self.content_analyzer.run(
-                f"請分析這個播客主題：'{topic}'，播客風格偏向：{tone}"
-            )
-            return result.data
-        except Exception as e:
-            print(f"Content analysis error: {e}")
-            return ContentAnalysis(
-                topic_category="通用",
-                complexity_level="intermediate",
-                target_audience="一般聽眾",
-                recommended_style="對話式",
-                content_freshness="evergreen"
-            )
-
     async def generate_podcast_script(
         self, 
         request: PodcastGenerationRequest,
@@ -528,20 +396,10 @@ class PydanticAIService:
         return syllables
 
 
-class AIService:
-    def __init__(self):
-        if settings.GEMINI_API_KEY:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            self.model = genai.GenerativeModel('gemini-2.5-flash')
-        else:
-            self.model = None
-        
-        self.translation_service = TranslationService()
-        self.tts_service = TTSService()
-
 # Constants and utility functions from agents.py
 CONTEXT_WINDOW_TOKENS = 32000
 
+#估算token數量
 def count_tokens(text):
     return int(len(text) / 1.5)
 
@@ -559,6 +417,7 @@ def trim_context(context_list, max_tokens=CONTEXT_WINDOW_TOKENS):
 def max_chars_for_duration(minutes):
     return int(minutes * 120)
 
+#定義兩個主持人佳昀/敏權
 class HostAgent:
     def __init__(self, name, personality, ai_service):
         self.name = name
@@ -1070,7 +929,7 @@ class AIService:
         return syllables if syllables else [word.lower()]
 
 
-# 從 agents.py 合併過來的主要函數，供外部調用
+
 async def generate_podcast_script_with_agents(articles, max_minutes=25):
     """
     Generate podcast script with agents - main function from agents.py
