@@ -415,24 +415,74 @@ class TTSService:
         return segments
 
     async def _merge_audio_files(self, audio_paths, output_path):
+        """合併音檔並回傳是否成功"""
         import wave
-        data = []
-        params = None
-        for path in audio_paths:
-            if not os.path.exists(path):
-                print(f"Audio file not found: {path}")
-                continue
-            with wave.open(path, 'rb') as wf:
-                if params is None:
-                    params = wf.getparams()
-                data.append(wf.readframes(wf.getnframes()))
-        if params is None:
-            print("沒有可合併的音檔")
-            return
-        with wave.open(output_path, 'wb') as out:
-            out.setparams(params)
-            for d in data:
-                out.writeframes(d)
+        try:
+            data = []
+            params = None
+            
+            # 檢查所有音檔是否存在
+            valid_paths = []
+            for path in audio_paths:
+                if not os.path.exists(path):
+                    logger.warning(f"Audio file not found: {path}")
+                    continue
+                valid_paths.append(path)
+            
+            if not valid_paths:
+                logger.error("沒有可合併的音檔")
+                return False
+            
+            # 讀取並合併音檔
+            for path in valid_paths:
+                try:
+                    with wave.open(path, 'rb') as wf:
+                        if params is None:
+                            params = wf.getparams()
+                            logger.info(f"音檔參數: {params}")
+                        
+                        # 檢查音檔參數是否一致
+                        current_params = wf.getparams()
+                        if (current_params.nchannels != params.nchannels or 
+                            current_params.sampwidth != params.sampwidth or 
+                            current_params.framerate != params.framerate):
+                            logger.warning(f"音檔參數不一致: {path}")
+                            logger.warning(f"預期: {params}")
+                            logger.warning(f"實際: {current_params}")
+                        
+                        frame_data = wf.readframes(wf.getnframes())
+                        data.append(frame_data)
+                        logger.info(f"成功讀取音檔: {path} ({len(frame_data)} bytes)")
+                except Exception as e:
+                    logger.error(f"讀取音檔失敗: {path}, 錯誤: {e}")
+                    continue
+            
+            if not data:
+                logger.error("沒有成功讀取任何音檔數據")
+                return False
+            
+            # 寫入合併後的音檔
+            with wave.open(output_path, 'wb') as out:
+                out.setparams(params)
+                total_bytes = 0
+                for d in data:
+                    out.writeframes(d)
+                    total_bytes += len(d)
+                
+                logger.info(f"合併音檔成功: {output_path}")
+                logger.info(f"總共寫入 {total_bytes} bytes")
+            
+            # 驗證輸出檔案
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                logger.info(f"合併檔案驗證成功: {output_path} ({os.path.getsize(output_path)} bytes)")
+                return True
+            else:
+                logger.error(f"合併檔案驗證失敗: {output_path}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"音檔合併過程發生錯誤: {e}")
+            return False
 
     def _generate_readable_filename(self, text: str, speaker: str = "", index: int = None, script_name: str = "", segment_index: int = None) -> str:
         """生成可讀性好的音檔檔名
@@ -527,8 +577,16 @@ class TTSService:
                 # 檢查是否需要分段處理（按音節數限制）
                 romanization_words = cleaned_romanization.split()
                 if len(romanization_words) > 8 or len(cleaned_romanization) > 150:
-                    logger.info(f"Long romanization detected ({len(cleaned_romanization)} chars, {len(romanization_words)} syllables), using segmentation approach")
-                    return await self._generate_segmented_audio(hakka_text, cleaned_romanization, speaker, segment_index, script_name)
+                    logger.info(...)
+                    segmented_result = await self._generate_segmented_audio(
+                        hakka_text, cleaned_romanization, speaker, segment_index, script_name
+                    )
+
+                    # 加入 segment_paths 到回傳
+                    if isinstance(segmented_result, dict):
+                        segmented_result["segment_paths"] = segmented_result.get("segment_paths", [])
+
+                    return segmented_result
                 
                 cleaned_text = cleaned_romanization
                 text_type = "roma"
@@ -719,20 +777,9 @@ class TTSService:
         except Exception as e:
             logger.error(f"TTS generation failed: {e}")
             return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
-
+    
     async def _generate_segmented_audio(self, hakka_text: str, romanization: str, speaker: str = "", segment_index: int = None, script_name: str = "") -> Dict[str, Any]:
-        """處理長羅馬拼音的分段音檔生成和合併
-        
-        Args:
-            hakka_text: 客語文本
-            romanization: 清理後的羅馬拼音
-            speaker: 說話者ID
-            segment_index: 段落索引
-            script_name: 腳本名稱
-            
-        Returns:
-            合併後的音檔資訊
-        """
+        """處理長羅馬拼音的分段音檔生成和合併"""
         try:
             # 分割羅馬拼音（使用音節數限制）
             romanization_segments = self._split_romanization(romanization, max_length=150, max_syllables=8)
@@ -764,7 +811,16 @@ class TTSService:
                 if segment_result:
                     temp_audio_paths.append(str(temp_audio_path))
                     successful_segments += 1
-                    logger.info(f"Segment {i+1} generated successfully")
+                    logger.info(f"Segment {i+1} generated successfully: {temp_audio_path}")
+                    
+                    # 驗證生成的音檔
+                    if os.path.exists(temp_audio_path):
+                        file_size = os.path.getsize(temp_audio_path)
+                        logger.info(f"Segment file size: {file_size} bytes")
+                        if file_size == 0:
+                            logger.warning(f"Segment {i+1} generated empty file")
+                    else:
+                        logger.error(f"Segment {i+1} file not found: {temp_audio_path}")
                 else:
                     logger.warning(f"Segment {i+1} generation failed")
             
@@ -776,14 +832,35 @@ class TTSService:
             if len(temp_audio_paths) == 1:
                 # 只有一個片段，直接重命名
                 import shutil
-                shutil.move(temp_audio_paths[0], str(final_audio_path))
-                logger.info("Single segment, renamed to final audio file")
+                try:
+                    shutil.move(temp_audio_paths[0], str(final_audio_path))
+                    logger.info("Single segment, renamed to final audio file")
+                    merge_success = True
+                except Exception as e:
+                    logger.error(f"Failed to rename single segment: {e}")
+                    merge_success = False
             else:
                 # 多個片段，需要合併
+                logger.info(f"Merging {len(temp_audio_paths)} segments into {final_audio_path}")
                 merge_success = await self._merge_audio_files(temp_audio_paths, str(final_audio_path))
-                if not merge_success:
-                    logger.error("Audio merging failed, using fallback")
-                    return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
+            
+            if not merge_success:
+                logger.error("Audio merging failed, using fallback")
+                return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
+            
+            # 驗證最終音檔
+            if not os.path.exists(final_audio_path) or os.path.getsize(final_audio_path) == 0:
+                logger.error(f"Final audio file validation failed: {final_audio_path}")
+                return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
+            
+            # 清理臨時檔案
+            for temp_path in temp_audio_paths:
+                try:
+                    if os.path.exists(temp_path):
+                        os.remove(temp_path)
+                        logger.debug(f"Cleaned up temp file: {temp_path}")
+                except Exception as e:
+                    logger.warning(f"Failed to clean up temp file {temp_path}: {e}")
             
             # 計算時長
             duration = max(10, len(hakka_text) * 0.5)
@@ -799,7 +876,8 @@ class TTSService:
                 "romanization": romanization,
                 "voice_model": f"broncitts/{speaker}",
                 "segments_count": successful_segments,
-                "total_segments": len(romanization_segments)
+                "total_segments": len(romanization_segments),
+                "segment_paths": []  # 已清理，回傳空列表
             }
             
         except Exception as e:
