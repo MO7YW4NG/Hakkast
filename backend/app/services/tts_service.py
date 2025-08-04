@@ -414,75 +414,7 @@ class TTSService:
         logger.info(f"Segment character counts: {[len(s) for s in segments]}")
         return segments
 
-    async def _merge_audio_files(self, audio_paths, output_path):
-        """合併音檔並回傳是否成功"""
-        import wave
-        try:
-            data = []
-            params = None
-            
-            # 檢查所有音檔是否存在
-            valid_paths = []
-            for path in audio_paths:
-                if not os.path.exists(path):
-                    logger.warning(f"Audio file not found: {path}")
-                    continue
-                valid_paths.append(path)
-            
-            if not valid_paths:
-                logger.error("沒有可合併的音檔")
-                return False
-            
-            # 讀取並合併音檔
-            for path in valid_paths:
-                try:
-                    with wave.open(path, 'rb') as wf:
-                        if params is None:
-                            params = wf.getparams()
-                            logger.info(f"音檔參數: {params}")
-                        
-                        # 檢查音檔參數是否一致
-                        current_params = wf.getparams()
-                        if (current_params.nchannels != params.nchannels or 
-                            current_params.sampwidth != params.sampwidth or 
-                            current_params.framerate != params.framerate):
-                            logger.warning(f"音檔參數不一致: {path}")
-                            logger.warning(f"預期: {params}")
-                            logger.warning(f"實際: {current_params}")
-                        
-                        frame_data = wf.readframes(wf.getnframes())
-                        data.append(frame_data)
-                        logger.info(f"成功讀取音檔: {path} ({len(frame_data)} bytes)")
-                except Exception as e:
-                    logger.error(f"讀取音檔失敗: {path}, 錯誤: {e}")
-                    continue
-            
-            if not data:
-                logger.error("沒有成功讀取任何音檔數據")
-                return False
-            
-            # 寫入合併後的音檔
-            with wave.open(output_path, 'wb') as out:
-                out.setparams(params)
-                total_bytes = 0
-                for d in data:
-                    out.writeframes(d)
-                    total_bytes += len(d)
-                
-                logger.info(f"合併音檔成功: {output_path}")
-                logger.info(f"總共寫入 {total_bytes} bytes")
-            
-            # 驗證輸出檔案
-            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                logger.info(f"合併檔案驗證成功: {output_path} ({os.path.getsize(output_path)} bytes)")
-                return True
-            else:
-                logger.error(f"合併檔案驗證失敗: {output_path}")
-                return False
-                
-        except Exception as e:
-            logger.error(f"音檔合併過程發生錯誤: {e}")
-            return False
+
 
     def _generate_readable_filename(self, text: str, speaker: str = "", index: int = None, script_name: str = "", segment_index: int = None) -> str:
         """生成可讀性好的音檔檔名
@@ -884,6 +816,76 @@ class TTSService:
             logger.error(f"Segmented TTS generation failed: {e}")
             return await self._generate_fallback_audio(hakka_text, romanization, speaker, segment_index, script_name)
 
+    async def _merge_audio_files(self, audio_paths, output_path):
+        """合併音檔並回傳是否成功"""
+        import wave
+        try:
+            data = []
+            params = None
+            
+            # 檢查所有音檔是否存在
+            valid_paths = []
+            for path in audio_paths:
+                if not os.path.exists(path):
+                    logger.warning(f"Audio file not found: {path}")
+                    continue
+                valid_paths.append(path)
+            
+            if not valid_paths:
+                logger.error("沒有可合併的音檔")
+                return False
+            
+            # 讀取並合併音檔
+            for path in valid_paths:
+                try:
+                    with wave.open(path, 'rb') as wf:
+                        if params is None:
+                            params = wf.getparams()
+                            logger.info(f"音檔參數: {params}")
+                        
+                        # 檢查音檔參數是否一致
+                        current_params = wf.getparams()
+                        if (current_params.nchannels != params.nchannels or 
+                            current_params.sampwidth != params.sampwidth or 
+                            current_params.framerate != params.framerate):
+                            logger.warning(f"音檔參數不一致: {path}")
+                            logger.warning(f"預期: {params}")
+                            logger.warning(f"實際: {current_params}")
+                        
+                        frame_data = wf.readframes(wf.getnframes())
+                        data.append(frame_data)
+                        logger.info(f"成功讀取音檔: {path} ({len(frame_data)} bytes)")
+                except Exception as e:
+                    logger.error(f"讀取音檔失敗: {path}, 錯誤: {e}")
+                    continue
+            
+            if not data:
+                logger.error("沒有成功讀取任何音檔數據")
+                return False
+            
+            # 寫入合併後的音檔
+            with wave.open(output_path, 'wb') as out:
+                out.setparams(params)
+                total_bytes = 0
+                for d in data:
+                    out.writeframes(d)
+                    total_bytes += len(d)
+                
+                logger.info(f"合併音檔成功: {output_path}")
+                logger.info(f"總共寫入 {total_bytes} bytes")
+            
+            # 驗證輸出檔案
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                logger.info(f"合併檔案驗證成功: {output_path} ({os.path.getsize(output_path)} bytes)")
+                return True
+            else:
+                logger.error(f"合併檔案驗證失敗: {output_path}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"音檔合併過程發生錯誤: {e}")
+            return False
+
     async def _generate_single_segment_audio(self, romanization: str, output_path: str, speaker: str = "") -> bool:
         """生成單個羅馬拼音片段的音檔
         
@@ -1095,6 +1097,8 @@ class TTSService:
         audio_data = b'\x00' * (num_samples * 2)
         
         return header + fmt_chunk + data_header + audio_data
+    
+    
     
     async def get_audio_info(self, audio_id: str) -> Optional[Dict[str, Any]]:
         """Get information about generated audio"""
