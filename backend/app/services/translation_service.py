@@ -76,13 +76,13 @@ class TranslationService:
             
             # 根據腔調選擇 endpoint
             if dialect == "hailu":
-                hanzi_endpoint = "/MT/translate/hakka_hailu_zh_hk"
-                py_endpoint = "/MT/translate/hakka_hailu_hk_py"
-                tone_endpoint = "/MT/translate/hakka_hailu_hk_py_tone"
+                hanzi_endpoint = "MT/translate/hakka_hailu_zh_hk"
+                py_endpoint = "MT/translate/hakka_hailu_hk_py"
+                tone_endpoint = "MT/translate/hakka_hailu_hk_py_tone"
             else:
-                hanzi_endpoint = "/MT/translate/hakka_zh_hk"
-                py_endpoint = "/MT/translate/hakka_hk_py"
-                tone_endpoint = "/MT/translate/hakka_hk_py_tone"
+                hanzi_endpoint = "MT/translate/hakka_zh_hk"
+                py_endpoint = "MT/translate/hakka_hk_py"
+                tone_endpoint = "MT/translate/hakka_hk_py_tone"
 
             payload = {'input': chinese_text}
             # 中文→客語漢字

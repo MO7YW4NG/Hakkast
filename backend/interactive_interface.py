@@ -157,7 +157,7 @@ async def interactive_podcast_generator():
         result = await ai_service.generate_podcast_script_with_agents(crawled_articles, max_minutes=25)
         
         # 從返回的字典中取出原始腳本
-        podcast_script = result["original_script"]
+        podcast_script = result["tts_ready_script"]
         print("\n腳本生成完成")
         print("進行客語翻譯...")
 
@@ -392,19 +392,6 @@ async def add_hakka_translation_to_script(podcast_script, dialect="sihxian"):
         item.hakka_text = result.get("hakka_text", "")
         item.romanization = result.get("romanization", "")
         item.romanization_tone = result.get("romanization_tone", "")
-        
-        # 英文轉羅馬拼音處理 - 解決TTS標調問題
-        if item.romanization:
-            print(f"處理羅馬拼音中的英文單字: {item.romanization}")
-            try:
-                # 使用AI Service處理英文單字轉換
-                processed_romanization = await ai_service.process_romanization_for_tts(item.romanization)
-                item.romanization = processed_romanization
-                print(f"轉換完成: {processed_romanization}")
-            except Exception as e:
-                print(f"羅馬拼音處理失敗: {str(e)}")
-                # 保持原始romanization，不中斷流程
-    
     await service.close()
     return podcast_script
 
