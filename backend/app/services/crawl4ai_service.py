@@ -5,6 +5,9 @@ from bs4 import BeautifulSoup
 import requests
 import re
 import xml.etree.ElementTree as ET
+import logging
+
+logger = logging.getLogger(__name__)
 
 def clean_markdown(md: str) -> str:
     """移除 markdown 中的 [文字](連結) 與多餘星號/空白行"""
@@ -124,121 +127,186 @@ def is_usable_license(license_url: str) -> bool:
     )
 
 async def crawl_news(topic: str, max_articles: int = 3):
-    crawled = []
-    ...
+    """Optimized news crawling function with better error handling and structure"""
     if topic == "research_deep_learning":
-        try:
-            found = 0
-            page_num = 1
-            page_size = 50
-            while found < max_articles:
-                api_url = f"https://api.alphaxiv.org/v2/papers/trending-papers?page_num={page_num}&sort_by=Hot&page_size={page_size}"
+        return await _crawl_research_papers(topic, max_articles)
+    
+    # Handle general web crawling
+    return await _crawl_general_news(topic, max_articles)
+
+async def _crawl_research_papers(topic: str, max_articles: int):
+    """Crawl research papers from AlphaXiv API"""
+    crawled = []
+    
+    try:
+        found = 0
+        page_num = 1
+        page_size = 50
+        
+        while found < max_articles:
+            api_url = f"https://api.alphaxiv.org/v2/papers/trending-papers?page_num={page_num}&sort_by=Hot&page_size={page_size}"
+            
+            try:
                 response = requests.get(api_url, timeout=20)
+                response.raise_for_status()
                 json_data = response.json()
-                papers = json_data.get("data", {}).get("trending_papers", [])
-                if not isinstance(papers, list) or not papers:
-                    if found == 0:
-                        print("沒有找到 CC 授權論文。")
+            except requests.RequestException as e:
+                logger.error(f"API request failed: {e}")
+                break
+            except ValueError as e:
+                logger.error(f"Invalid JSON response: {e}")
+                break
+            
+            papers = json_data.get("data", {}).get("trending_papers", [])
+            if not isinstance(papers, list) or not papers:
+                if found == 0:
+                    logger.info("No CC licensed papers found")
+                break
+
+            logger.info(f"Page {page_num}: {len(papers)} papers found")
+            
+            for item in papers:
+                if found >= max_articles:
                     break
-
-                if page_num == 1:
-                    print(f"原始資料共 {len(papers)} 筆")
-                    print("第一筆資料預覽：", papers[0])
-
-                print(f"page_num={page_num}, 本頁有 {len(papers)} 篇")
-                for item in papers:
-                    if found >= max_articles:
-                        break
-                    paper_id = item.get("universal_paper_id")
-                    title = item.get("title", "No Title")
-                    abstract = item.get("abstract", "")
-                    summary_text = item.get("paper_summary", {}).get("summary", "")
-                    published = item.get("first_publication_date", None)
-
-                    arxiv_id = paper_id
-                    license_url = get_arxiv_license(arxiv_id)
-                    print(f"{arxiv_id} license_url={license_url}")
+                    
+                try:
+                    paper_data = _extract_paper_data(item)
+                    if not paper_data:
+                        continue
+                        
+                    license_url = get_arxiv_license(paper_data['arxiv_id'])
                     if not is_usable_license(license_url):
-                        print(f"跳過非 CC 授權論文：{arxiv_id}")
+                        logger.debug(f"Skipping non-CC paper: {paper_data['arxiv_id']}")
                         continue
 
-                    html_content = fetch_arxiv_html_content(arxiv_id)
-                    url = f"https://arxiv.org/abs/{arxiv_id}"
-
-                    crawled.append(CrawledContent(
-                        id=url,
-                        title=title,
-                        content=html_content or abstract,
-                        summary=clean_markdown(summary_text)[:300],
-                        url=url,
-                        source="arxiv",
-                        published_at=datetime.fromisoformat(published) if published else datetime.now(),
-                        crawled_at=datetime.now(),
-                        content_type=ContentType.RESEARCH,
-                        topic=topic,
-                        keywords=[],
-                        relevance_score=0.0,
-                        license_url=license_url,
-                        license_type=parse_license_type(license_url)
-                    ))
+                    content_item = _create_research_content_item(paper_data, topic, license_url)
+                    crawled.append(content_item)
                     found += 1
+                    
+                    logger.info(f"Added paper: {paper_data['title'][:50]}...")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to process paper: {e}")
+                    continue
+                    
+            page_num += 1
 
-                    print(f"標題：{title}")
-                    print(f"連結：{url}")
-                    print(f"授權：{license_url}")
-                    print(f"發佈：{published[:10] if published else '未知'}")
-                    print(f"摘要：{summary_text[:100]}")
-                    print("------")
-                page_num += 1
+        logger.info(f"Successfully crawled {len(crawled)} research papers")
+        return crawled
 
-            print(f"共抓到 {len(crawled)} 筆資料")
-            return crawled
+    except Exception as e:
+        logger.error(f"Research crawling failed: {e}")
+        return []
 
-        except Exception as e:
-            print(f"抓 AlphaXiv API 失敗：{e}")
+async def _crawl_general_news(topic: str, max_articles: int):
+    """Crawl general news articles"""
+    crawled = []
+    
+    try:
+        list_page_url = _list_page_url_for_topic(topic)
+        if not list_page_url:
+            logger.error(f"No URL configured for topic: {topic}")
+            return []
+            
+        article_urls = _extract_article_links(list_page_url, limit=max_articles)
+        if not article_urls:
+            logger.warning(f"No article URLs found for topic: {topic}")
             return []
 
-    # crawl4ai 一般網頁
-    list_page_url = _list_page_url_for_topic(topic)
-    article_urls = _extract_article_links(list_page_url, limit=max_articles)
+        async with AsyncWebCrawler() as crawler:
+            for url in article_urls:
+                try:
+                    result = await crawler.arun(url)
+                    content_item = _create_news_content_item(result, topic)
+                    crawled.append(content_item)
+                    
+                    logger.info(f"Added news: {content_item.title[:50]}...")
+                    
+                except Exception as e:
+                    logger.error(f"Failed to crawl URL {url}: {e}")
+                    continue
 
-    async with AsyncWebCrawler() as crawler:
-        for url in article_urls:
-            result = await crawler.arun(url)
+        logger.info(f"Successfully crawled {len(crawled)} news articles")
+        return crawled
+        
+    except Exception as e:
+        logger.error(f"General news crawling failed: {e}")
+        return []
 
-            title = result.metadata.get("title", "No title")
-            markdown = getattr(result, "markdown", "")
-            content = getattr(result, "content", "")
+def _extract_paper_data(item):
+    """Extract paper data from API response"""
+    try:
+        paper_id = item.get("universal_paper_id")
+        if not paper_id:
+            return None
+            
+        return {
+            'arxiv_id': paper_id,
+            'title': item.get("title", "No Title"),
+            'abstract': item.get("abstract", ""),
+            'summary_text': item.get("paper_summary", {}).get("summary", ""),
+            'published': item.get("first_publication_date")
+        }
+    except Exception as e:
+        logger.error(f"Failed to extract paper data: {e}")
+        return None
 
-            raw_content = content if content and len(content.strip()) > 50 else extract_fallback_content(result.url)
-            raw_content = clean_content(raw_content)  
-            raw_summary = raw_content if raw_content else markdown
-            summary = clean_markdown(raw_summary).strip()[:300]
-            published_time = extract_published_date(result.url)
+def _create_research_content_item(paper_data, topic, license_url):
+    """Create CrawledContent item for research paper"""
+    arxiv_id = paper_data['arxiv_id']
+    html_content = fetch_arxiv_html_content(arxiv_id)
+    url = f"https://arxiv.org/abs/{arxiv_id}"
+    
+    published_at = None
+    if paper_data['published']:
+        try:
+            published_at = datetime.fromisoformat(paper_data['published'])
+        except ValueError:
+            published_at = datetime.now()
+    
+    return CrawledContent(
+        id=url,
+        title=paper_data['title'],
+        content=html_content or paper_data['abstract'],
+        summary=clean_markdown(paper_data['summary_text'])[:300],
+        url=url,
+        source="arxiv",
+        published_at=published_at or datetime.now(),
+        crawled_at=datetime.now(),
+        content_type=ContentType.RESEARCH,
+        topic=topic,
+        keywords=[],
+        relevance_score=0.0,
+        license_url=license_url,
+        license_type=parse_license_type(license_url)
+    )
 
-            crawled.append(CrawledContent(
-                id=result.url,
-                title=title,
-                content=raw_content,
-                summary=summary,
-                url=result.url,
-                source="crawl4ai",
-                published_at=published_time,
-                crawled_at=datetime.now(),
-                content_type=ContentType.NEWS,
-                topic=topic,
-                keywords=[],
-                relevance_score=0.0
-            ))
+def _create_news_content_item(result, topic):
+    """Create CrawledContent item for news article"""
+    title = result.metadata.get("title", "No title")
+    markdown = getattr(result, "markdown", "")
+    content = getattr(result, "content", "")
 
-            print(f"標題：{title}")
-            print(f"連結：{result.url}")
-            print(f"發佈：{published_time.date()}")
-            print(f"摘要：{summary}")
-            print("------")
+    raw_content = content if content and len(content.strip()) > 50 else extract_fallback_content(result.url)
+    raw_content = clean_content(raw_content)  
+    raw_summary = raw_content if raw_content else markdown
+    summary = clean_markdown(raw_summary).strip()[:300]
+    published_time = extract_published_date(result.url)
 
-    print(f"共抓到 {len(crawled)} 筆資料")
-    return crawled
+    return CrawledContent(
+        id=result.url,
+        title=title,
+        content=raw_content,
+        summary=summary,
+        url=result.url,
+        source="crawl4ai",
+        published_at=published_time,
+        crawled_at=datetime.now(),
+        content_type=ContentType.NEWS,
+        topic=topic,
+        keywords=[],
+        relevance_score=0.0
+    )
 
 def _list_page_url_for_topic(topic: str):
     return {

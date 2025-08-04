@@ -1,34 +1,69 @@
-# Python bytecode
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Virtual environments
+# Virtual Environment
 venv/
 env/
-.venv/
+ENV/
 
-# Distribution / packaging
-build/
-dist/
-*.egg-info/
-
-# Logs and databases
-*.log
-*.sqlite3
-*.db
-.pytest_cache/
-
-# Coverage reports
-coverage/
-htmlcov/
-
-# Environment variables
-.env
-
-# IDEs and editors
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# macOS
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# Logs
+*.log
+logs/
+
+# Audio Files (temporary/generated)
+static/audio/*.wav
+static/audio/*.mp3
+static/audio/filelist.txt
+
+# JSON outputs (temporary)
+json/temp_*.json
+
+# OS
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Database
+*.db
+*.sqlite3

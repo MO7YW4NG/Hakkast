@@ -1,299 +1,58 @@
 import os
-import google.generativeai as genai
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel
 from pydantic_ai import Agent
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.models.openai import OpenAIModel
-import asyncio
-from datetime import datetime
 from app.core.config import settings
-from app.models.podcast import PodcastGenerationRequest, PodcastScript, PodcastScriptContent
+from app.models.podcast import PodcastScript, PodcastScriptContent, EnglishTranslationResult
 from app.services.translation_service import TranslationService
 from app.services.tts_service import TTSService
-from app.services.crawl4ai_service import crawl_news
-from app.models.crawler import CrawledContent
 
-# 結構化的回應模型 (從 pydantic_ai_service.py 合併)
-class PydanticPodcastScript(BaseModel):
-    title: str
-    hosts: List[str]  
-    full_dialogue: str  
-    estimated_duration_minutes: int
-    key_points: List[str]
-    sources_mentioned: List[str]
-
-
-class ContentAnalysis(BaseModel):
-    """內容分析結果模型"""
-    topic_category: str
-    complexity_level: str  # "beginner", "intermediate", "advanced"
-    target_audience: str
-    recommended_style: str
-    content_freshness: str  # "current", "evergreen", "historical"
-
-
-class EnglishTranslationResult(BaseModel):
-    """英文翻譯結果模型"""
-    original_texts: List[str]  # 翻譯前的英文文本列表
-    translated_texts: List[str]  # 翻譯後的中文文本列表
-    processed_content: str  # 替換英文後的完整文本
-
-
-class PydanticAIService:
-    """使用 Pydantic AI ( TWCC AFS 和 Gemini ) - 從 pydantic_ai_service.py 合併"""
+class AgentService:
+    """使用 Pydantic AI (TWCC AFS 和 Gemini)"""
  
-    def __init__(self, use_twcc: bool = True):
-        self.use_twcc = use_twcc
+    def __init__(self):
         
-        if use_twcc and settings.TWCC_API_KEY and settings.TWCC_BASE_URL:
+        if settings.TWCC_API_KEY and settings.TWCC_BASE_URL:
             # TWCC AFS 
             print("使用 TWCC AFS ...")
             os.environ["OPENAI_API_KEY"] = settings.TWCC_API_KEY
             os.environ["OPENAI_BASE_URL"] = settings.TWCC_BASE_URL
-            self.model = OpenAIModel(settings.TWCC_MODEL_NAME)
-        elif settings.GEMINI_API_KEY:
+            self.twcc_model = OpenAIModel(settings.TWCC_MODEL_NAME)
+        
+        if settings.GEMINI_API_KEY:
             # Gemini 
             print("使用 Gemini 模型...")
             os.environ["GEMINI_API_KEY"] = settings.GEMINI_API_KEY
-            self.model = GeminiModel('gemini-2.5-flash')
-            self.use_twcc = False
-        else:
-            raise ValueError("需要設定 TWCC_API_KEY + TWCC_BASE_URL 或 GEMINI_API_KEY")
+            self.gemini_flash_model = GeminiModel('gemini-2.5-flash')    
+            self.gemini_pro_model = GeminiModel('gemini-2.5-pro') 
         
-        self.gemini_flash_model = GeminiModel('gemini-2.5-flash')    # 創建對話 Agent
+        # 創建對話 Agent
         self.dialogue_agent = Agent(
             model=self.gemini_flash_model,
             output_type=str,
             system_prompt="""
-            你是專業播客主持人，請根據上下文和新聞摘要，產生一段自然、深入的對話回應。
+            你是專業Podcast主持人，請根據上下文和新聞摘要，產生一段自然、深入的對話回應。
             請用繁體中文，風格專業且有深度。
             """
         )    
-        # 初始化英文翻譯 agent (使用 Gemini 2.5 Pro)
-        if settings.GEMINI_API_KEY:
-            self.gemini_pro_model = GeminiModel('gemini-2.5-pro')  # 使用更強大的 Pro 版本
-            self.english_translator = Agent(
-                model=self.gemini_pro_model,
-                output_type=EnglishTranslationResult,
-                system_prompt="""
-                你是一個專業的英文翻譯agent。你的任務是：
-                1. 從輸入文本中識別並提取所有英文單字、片語和句子
-                2. 將這些英文內容翻譯成自然流暢的繁體中文
-                3. 提供翻譯前後的對照列表
-                
-                翻譯原則：
-                - 保持原意不變
-                - 使用自然的中文表達
-                - 專業術語要準確翻譯
-                - 品牌名稱使用常見中文譯名
-                - 不需要英文註解
-                """
-            )
-        else:
-            self.gemini_pro_model = None
-            self.english_translator = None
-        
-    async def generate_podcast_script(
-        self, 
-        request: PodcastGenerationRequest,
-        crawled_content: Optional[List[CrawledContent]] = None,
-        content_analysis: Optional[ContentAnalysis] = None
-    ) -> PydanticPodcastScript:
-        """生成結構化的播客腳本"""
-        
-        # 如果沒有內容分析，先進行分析
-        if not content_analysis:
-            content_analysis = await self.analyze_content_requirements(
-                request.topic, 
-                request.tone or "casual"
-            )
-        
-        # 準備上下文資訊
-        context_info = f"""
-        主題：{request.topic}
-        風格：{request.tone or 'casual'}
-        目標時長：{request.duration or 10} 分鐘
-        
-        內容分析結果：
-        - 類別：{content_analysis.topic_category}
-        - 複雜度：{content_analysis.complexity_level}
-        - 目標受眾：{content_analysis.target_audience}
-        - 推薦風格：{content_analysis.recommended_style}
-        - 內容時效性：{content_analysis.content_freshness}
-        """
-        
-        # 加入參考資料
-        if crawled_content:
-            context_info += "\n\n參考資料：\n"
-            for content in crawled_content[:3]:  
-                context_info += (
-                    f"- 標題：{content.title}\n"
-                    f"  內容：{(content.content or content.summary)[:1500]}...\n"
-                )
-                
-        try:
-            result = await self.script_generator.run(context_info)
-            return result.data
-        except Exception as e:
-            print(f"Script generation error: {e}")
-            return self._create_fallback_script(request)
-
-    async def generate_complete_podcast_content(
-        self, 
-        request: PodcastGenerationRequest,
-        crawled_content: Optional[List[CrawledContent]] = None
-    ) -> Dict[str, Any]:
-        """完整的播客內容生成流程"""
-        try:
-            print("正在分析內容需求...")
-            content_analysis = await self.analyze_content_requirements(request.topic, request.tone)
-
-            # 逐篇摘要
-            summaries = []
-            if crawled_content:
-                for content in crawled_content[:3]:
-                    summary = await self.summarize_article(content.content or content.summary)
-                    summaries.append(f"標題：{content.title}\n摘要：{summary}\n來源：{content.url}")
-
-            # Step 2: 合併摘要並由LLM產生腳本
-            combined_summary = "\n\n".join(summaries)
-            podcast_prompt = (
-                "請根據以下三篇新聞的重點摘要，逐一分析並串接，"
-                "生成一份約2200~2500字、15分鐘的雙主持人播客腳本。"
-                "內容必須涵蓋三篇新聞的重點，且不要虛構：\n"
-                f"{combined_summary}"
-            )
-            # 用腳本生成 agent 產生腳本
-            script = await self.script_generator.run(podcast_prompt)
-
-            # 分段生成
-            segments = []
-
-            # 開場
-            opening_prompt = (
-                "請根據以下三篇新聞摘要，生成播客開場白（約700字），"
-                "介紹主題並吸引聽眾：\n"
-                f"{combined_summary}"
-            )
-            opening = await self.generate_podcast_script_segment(opening_prompt)
-            segments.append(opening)
-
-            # 三篇新聞分別生成
-            for idx, summary in enumerate(summaries, 1):
-                news_prompt = (
-                    f"請根據以下新聞摘要，生成播客對話段落（約800字），"
-                    f"主題：第{idx}篇新聞\n{summary}"
-                )
-                news_segment = await self.generate_podcast_script_segment(news_prompt)
-                segments.append(news_segment)
-
-            # 結尾
-            closing_prompt = (
-                "請根據以上內容，生成播客結尾總結（約400字），"
-                "歸納重點並預告下集。"
-            )
-            closing = await self.generate_podcast_script_segment(closing_prompt)
-            segments.append(closing)
-
-            # 合併段落
-            full_script = "\n\n".join(segments)
+        # 初英文翻譯 agent
+        self.english_translator = Agent(
+            model=self.gemini_pro_model,
+            output_type=EnglishTranslationResult,
+            system_prompt="""
+            你是一個專業的英文翻譯agent。你的任務是：
+            1. 從輸入文本中識別並提取所有英文單字、片語和句子
+            2. 將這些英文內容翻譯成自然流暢的繁體中文
+            3. 提供翻譯前後的對照列表
             
-            # 暫時跳過英文處理，將在翻譯階段處理羅馬拼音中的英文
-            print("跳過英文處理，將在翻譯階段處理...")
-            tts_ready_script = full_script
-
-            # 完整內容（對話腳本）
-            full_content = f"""
-            Podcast 標題：{script.title}
-
-            主持人：{' 與 '.join(script.hosts)}
-
-            {script.full_dialogue}
+            翻譯原則：
+            - 保持原意不變
+            - 使用自然的中文表達
+            - 專業術語要準確翻譯
+            - 品牌名稱使用常見中文譯名
+            - 不需要英文註解
             """
-
-            return {
-                "success": True,
-                "model_info": {"model_type": "TWCC AFS" if self.use_twcc else "Gemini"},
-                "content_analysis": content_analysis.dict(),
-                "structured_script": {
-                    "title": script.title if 'script' in locals() else request.topic,
-                    "hosts": ["主持人A", "主持人B"],
-                    "full_dialogue": full_script,
-                    "estimated_duration_minutes": request.duration,
-                    "key_points": [],
-                    "sources_mentioned": []
-                },
-                "full_content": full_script,
-                "tts_ready_content": tts_ready_script,  # 新增：專為TTS準備的內容
-                "generation_timestamp": datetime.now().isoformat(),
-                "processing_steps": [
-                    "內容需求分析",
-                    "逐篇摘要",
-                    "分段生成",
-                    "英文轉換處理",
-                    "內容整合完成"
-                ]
-            }
-
-        except Exception as e:
-            print(f"Complete generation error: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "fallback_content": self._create_fallback_script(request).dict()
-            }
-
-    def _create_fallback_script(self, request: PodcastGenerationRequest) -> PydanticPodcastScript:
-        """創建備用腳本"""
-        fallback_dialogue = f"""
-        主持人A：
-        歡迎收聽今天的播客節目，我是主持人A。
-
-        主持人B：
-        我是主持人B。今天我們要聊的主題是{request.topic}。
-
-        主持人A：
-        這確實是一個很有趣的話題，讓我們來深入討論一下。
-
-        主持人B：
-        沒錯，這個議題值得我們從多個角度來分析。
-
-        主持人A：
-        感謝大家今天的收聽，我們下次再見！
-        """
-        
-        return PydanticPodcastScript(
-            title=f"關於{request.topic}的討論",
-            hosts=["主持人A", "主持人B"],
-            full_dialogue=fallback_dialogue,
-            estimated_duration_minutes=request.duration or 10,
-            key_points=[f"{request.topic}相關要點"],
-            sources_mentioned=["一般知識"]
         )
-
-    async def summarize_article(self, article_content: str) -> str:
-        """用 LLM 產生單篇新聞摘要，避免幻覺"""
-        prompt = f"請用550以內字摘要以下新聞內容，只用真實新聞細節，不要虛構：\n{article_content}"
-        result = await self.summarizer.run(prompt)
-        return str(result.data)
-
-    async def generate_podcast_script_segment(self, segment_prompt: str) -> str:
-        """分段生成播客腳本片段"""
-        result = await self.script_generator.run(segment_prompt)
-        return str(result.data.full_dialogue) if hasattr(result.data, "full_dialogue") else str(result.data)
-
-    async def generate_reply(self, prompt: str, output_type=None) -> str:
-        """生成對話回應"""
-        if output_type:
-            agent = Agent(model=self.model, output_type=output_type)
-            result = await agent.run(prompt)
-            return result.output
-        else:
-            # default:dialogue_agent
-            result = await self.dialogue_agent.run(prompt)
-            return result.output
-
     async def translate_english_to_chinese(self, text: str) -> EnglishTranslationResult:
         """
         使用 Gemini 2.5 Pro 處理英文翻譯
@@ -330,7 +89,7 @@ class PydanticAIService:
             """
             
             result = await self.english_translator.run(prompt)
-            translation_data = result.data
+            translation_data = result.output
             
             # 進行英文替換，生成處理後的文本
             processed_content = text
@@ -360,7 +119,11 @@ class PydanticAIService:
                 translated_texts=[],
                 processed_content=text
             )
-
+            
+    async def generate_reply(self, prompt: str) -> str:
+        """生成對話回應"""
+        result = await self.dialogue_agent.run(prompt)
+        return result.output
     # async def convert_english_to_romanization(self, text: str) -> str:
     #     """將文本中的英文單字轉換成帶數字標調的羅馬拼音格式"""
     #     try:
@@ -499,7 +262,6 @@ class PydanticAIService:
     #         else:
     #             syllables.append(word[i:])
     #             break
-        
     #     return syllables
 
 
@@ -562,241 +324,12 @@ class HostAgent:
 
 class AIService:
     def __init__(self):
-        if settings.GEMINI_API_KEY:
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            self.model = genai.GenerativeModel('gemini-2.5-flash')
-        else:
-            self.model = None
-        
         self.translation_service = TranslationService()
         self.tts_service = TTSService()
-    
-    async def generate_hakka_podcast_content(self, request: PodcastGenerationRequest) -> Dict[str, Any]:
-        """
-        Generate Hakka podcast content using the enhanced 4-step pipeline:
-        1. Crawl latest content for the topic (if applicable)
-        2. Generate Traditional Chinese script using Gemini + crawled content
-        3. Translate Chinese to Hakka
-        4. Generate Hakka TTS audio
-        """
-        
-        try:
-            # Step 1: Crawl latest content for dynamic topics
-            crawled_content = await self._crawl_topic_content(request.topic)
-            
-            # Step 2: Generate Traditional Chinese content using Gemini + crawled content
-            chinese_content = await self._generate_chinese_content(request, crawled_content)
-            
-            # Step 3: Translate Chinese to Hakka
-            translation_result = await self.translation_service.translate_chinese_to_hakka(
-                chinese_content["content"]
-            )
-            
-            # Step 4: Generate Hakka TTS audio
-            tts_result = await self.tts_service.generate_hakka_audio(
-                translation_result["hakka_text"],
-                translation_result["romanization"]
-            )
-            
-            return {
-                "title": chinese_content["title"],
-                "chinese_content": chinese_content["content"],
-                "hakka_content": translation_result["hakka_text"],
-                "romanization": translation_result["romanization"],
-                "audio_url": tts_result.get("audio_url"),
-                "audio_duration": tts_result.get("duration", 0),
-                "sources_used": chinese_content.get("sources_used", []),
-                "crawled_articles": len(crawled_content) if crawled_content else 0
-            }
-            
-        except Exception as e:
-            print(f"Error in AI pipeline: {e}")
-            return await self._generate_fallback_content(request)
-    
-    async def _crawl_topic_content(self, topic: str) -> List[CrawledContent]:
-        """Crawl latest content for dynamic topics like news or research"""
-        try:
-            # Check if topic requires crawling
-            crawling_keywords = [
-                "news", "latest", "recent", "current", "update", "research", 
-                "gaming", "technology", "science", "politics", "economics"
-            ]
-            
-            topic_lower = topic.lower()
-            should_crawl = any(keyword in topic_lower for keyword in crawling_keywords)
-            
-            if not should_crawl:
-                return []
-            
-            # Determine appropriate crawler topic
-            crawler_topic = self._map_to_crawler_topic(topic_lower)
-            if not crawler_topic:
-                return []
-            
-            # Use crawl_news function from crawl4ai_service
-            result = await crawl_news(crawler_topic, max_articles=5)
-            return result
-                
-        except Exception as e:
-            print(f"Error crawling content for topic '{topic}': {e}")
-            return []
-    
-    def _map_to_crawler_topic(self, topic: str) -> str:
-        """Map user topic to predefined crawler configurations"""
-        mapping = {
-            "gaming": "gaming_news",
-            "game": "gaming_news", 
-            "video game": "gaming_news",
-            "esports": "gaming_news",
-            "deep learning": "research_deep_learning",
-            "machine learning": "research_deep_learning", 
-            "ai research": "research_deep_learning",
-            "neural network": "research_deep_learning",
-            "technology": "technology_news",
-            "tech": "technology_news",
-            "startup": "technology_news",
-            "health": "health_wellness",
-            "wellness": "health_wellness",
-            "fitness": "health_wellness",
-            "climate": "climate_environment",
-            "environment": "climate_environment",
-            "sustainability": "climate_environment",
-            "finance": "finance_economics",
-            "economics": "finance_economics",
-            "investment": "finance_economics"
-        }
-        
-        for keyword, crawler_topic in mapping.items():
-            if keyword in topic:
-                return crawler_topic
-        
-        return ""
-
-    async def _generate_chinese_content(self, request: PodcastGenerationRequest, crawled_content: List[CrawledContent] = None) -> Dict[str, Any]:
-        """Generate Traditional Chinese content using Gemini AI"""
-        
-        if not self.model:
-            return self._generate_chinese_fallback(request)
-        
-        try:
-            prompt = self._build_chinese_prompt(request, crawled_content)
-            response = self.model.generate_content(prompt)
-            
-            # Parse the response
-            content = response.text
-            title = self._extract_title(content)
-            
-            # Extract sources used
-            sources_used = []
-            if crawled_content:
-                sources_used = list(set(item.source for item in crawled_content))
-            
-            return {
-                "title": title,
-                "content": content,
-                "sources_used": sources_used
-            }
-        except Exception as e:
-            print(f"Error generating Chinese content with Gemini: {e}")
-            return self._generate_chinese_fallback(request)
-    
-    def _build_chinese_prompt(self, request: PodcastGenerationRequest, crawled_content: List[CrawledContent] = None) -> str:
-        """Build the prompt for generating Traditional Chinese content"""
-        
-        tone_instructions = {
-            "casual": "使用親切、對話的語調，就像和好朋友聊天一樣。",
-            "educational": "採用資訊豐富的教學風格，清楚解釋概念。",
-            "storytelling": "運用敘事技巧和引人入勝的故事元素。",
-            "interview": "以訪談格式結構化，包含問題和詳細回答。"
-        }
-        
-        # Add crawled content to prompt if available
-        current_content_section = ""
-        if crawled_content:
-            current_content_section = "\n\n最新相關資訊參考：\n"
-            for i, content in enumerate(crawled_content[:3], 1):  # Limit to top 3 articles
-                current_content_section += f"\n{i}. 標題：{content.title}\n"
-                current_content_section += f"   來源：{content.source}\n"
-                current_content_section += f"   摘要：{content.summary}\n"
-            current_content_section += "\n請根據以上最新資訊，結合客家文化視角進行播客內容創作。"
-        
-        prompt = f"""
-請為以下主題創建一個 {request.duration} 分鐘的客家文化播客腳本："{request.topic}"
-
-要求：
-- 使用繁體中文撰寫
-- {tone_instructions.get(request.tone, '使用親切、對話的語調')}
-- 專注於客家文化、傳統和遺產
-- 內容要引人入勝且真實
-- 包含文化背景和歷史脈絡
-- 結構清晰：開場白、主要內容、結語
-- 語速估算：每分鐘約 50 字
-{current_content_section}
-
-{"個人興趣融入：" + request.interests if request.interests else ""}
-
-請在第一行提供吸引人的標題，然後提供完整的播客腳本。
-內容應該適合後續翻譯為客家話並製作成語音播客。
-"""
-        
-        return prompt
-    
-    def _extract_title(self, content: str) -> str:
-        """Extract title from the generated content"""
-        lines = content.strip().split('\n')
-        if lines:
-            # First non-empty line is likely the title
-            for line in lines:
-                if line.strip():
-                    return line.strip()
-        return "Hakka Podcast"
-    
-    def _generate_chinese_fallback(self, request: PodcastGenerationRequest) -> Dict[str, Any]:
-        """Generate fallback Chinese content when Gemini is not available"""
-        
-        fallback_content = f"""
-{request.topic} - 客家文化探索
-
-歡迎來到我們的客家播客！今天我們要探討關於{request.topic}這個迷人的主題。
-
-[這是演示版本。如需AI生成內容，請在.env文件中配置您的Gemini API密鑰。]
-
-客家文化擁有豐富的傳統和歷史。我們的祖先從中國北方遷徙而來，帶來了獨特的習俗、語言和飲食傳統，這些都被世代保存下來。
-
-無論我們以{request.tone}的方式討論{request.topic}，總有新的發現等著我們去探索客家文化遺產。從傳統歌謠和故事到古老智慧的現代詮釋，客家文化在保持核心價值的同時持續發展。
-
-客家話本身就是一個表達寶庫，捕捉了我們民族堅韌不拔和社區精神的精髓。通過這些播客，我們希望與母語使用者和正在學習文化遺產的人們分享這美麗的文化。
-
-感謝您加入我們的文化之旅。下次見，繼續探索和慶祝您的客家根源！
-
-[時長：約{request.duration}分鐘]
-"""
-        
-        return {
-            "title": f"{request.topic} - 客家文化探索",
-            "content": fallback_content
-        }
-    
-    async def _generate_fallback_content(self, request: PodcastGenerationRequest) -> Dict[str, Any]:
-        """Generate complete fallback content when services are not available"""
-        
-        chinese_content = self._generate_chinese_fallback(request)
-        
-        # Mock translation
-        hakka_content = chinese_content["content"].replace("歡迎", "歡迎汝").replace("我們", "俚")
-        
-        return {
-            "title": chinese_content["title"],
-            "chinese_content": chinese_content["content"],
-            "hakka_content": hakka_content,
-            "romanization": "",
-            "audio_url": None,
-            "audio_duration": 0
-        }
 
     async def generate_podcast_script_with_agents(self, articles, max_minutes=25):
         """Generate podcast script using agent-based conversation (merged from agents.py)"""
-        ai_service = PydanticAIService()
+        ai_service = AgentService()
         host_a = HostAgent("佳昀", "理性、專業、分析", ai_service)
         host_b = HostAgent("敏權", "幽默、活潑、互動", ai_service)
         dialogue = []
@@ -894,17 +427,14 @@ class AIService:
         # 合併同主持人發言，並在不同主持人時換行
         merged_lines = merge_same_speaker_lines(dialogue)
         
-        # 處理英文轉換 - 使用 Gemini 2.5 Pro 英文翻譯 agent
+        # 處理英文轉換
         print("正在處理腳本中的英文內容...")
         processed_lines = []
-        
-        # 初始化翻譯服務
-        translation_service = PydanticAIService(use_twcc=False)  # 強制使用 Gemini
         
         for line in merged_lines:
             try:
                 # 使用新的英文翻譯 agent 處理每一行
-                translation_result = await translation_service.translate_english_to_chinese(line)
+                translation_result = await ai_service.translate_english_to_chinese(line)
                 
                 # 如果有英文內容被翻譯，顯示翻譯對照
                 if translation_result.original_texts:
@@ -955,120 +485,3 @@ class AIService:
             "original_script": podcast_script,
             "tts_ready_script": tts_podcast_script
         }
-
-    # async def process_romanization_for_tts(self, romanization_text: str) -> str:
-    #     """專門處理romanization欄位中的英文單字，為TTS系統準備統一格式"""
-    #     try:
-    #         # 檢查是否包含沒有數字標調的英文單字
-    #         import re
-            
-    #         # 尋找英文單字（字母組成但沒有數字標調）
-    #         english_words = re.findall(r'\b[a-zA-Z]+\b', romanization_text)
-            
-    #         if not english_words:
-    #             return romanization_text
-            
-    #         # 處理每個英文單字
-    #         processed_text = romanization_text
-    #         for word in english_words:
-    #             try:
-    #                 converted_word = await self.convert_english_word_to_toned_romanization(word)
-    #                 # 替換原文中的英文單字
-    #                 processed_text = processed_text.replace(word, converted_word)
-    #                 print(f"英文轉換: {word} -> {converted_word}")
-    #             except Exception as e:
-    #                 print(f"轉換英文單字 '{word}' 失敗: {e}")
-    #                 continue
-            
-    #         return processed_text
-            
-    #     except Exception as e:
-    #         print(f"處理romanization失敗: {e}")
-    #         return romanization_text
-
-#     async def convert_english_word_to_toned_romanization(self, english_word: str) -> str:
-#         """將單個英文單字轉換為帶標調的羅馬拼音"""
-#         import re
-        
-#         try:
-#             if not self.model:
-#                 # 如果沒有模型，使用簡單分割
-#                 syllables = self.simple_syllable_split(english_word)
-#                 return " ".join([f"{syl}24" for syl in syllables])
-            
-#             prompt = f"""
-# 請將英文單字 "{english_word}" 轉換為客語羅馬拼音，每個音節都要有數字標調。
-
-# 參考範例：
-# - GitHub -> gi24 hab2
-# - Machine -> ma24 sin24  
-# - Learning -> lia24 ning24
-# - Hakkast -> ha24 ka24 si24 te24
-
-# 請只回傳轉換結果，不要其他說明。
-# """
-            
-#             response = await self.model.generate_content_async(prompt)
-#             result = response.text.strip()
-            
-#             if result and not re.search(r'[a-zA-Z]', result):
-#                 return result
-#             else:
-#                 # 如果結果包含英文字母，使用後備方案
-#                 syllables = self.simple_syllable_split(english_word)
-#                 return " ".join([f"{syl}24" for syl in syllables])
-                
-#         except Exception as e:
-#             print(f"AI轉換失敗: {e}")
-#             # 使用簡單分割作為後備
-#             syllables = self.simple_syllable_split(english_word)
-#             return " ".join([f"{syl}24" for syl in syllables])
-
-    # def simple_syllable_split(self, word: str) -> list:
-    #     """簡單的音節分割，作為後備方案"""
-    #     common_splits = {
-    #         "GitHub": ["gi", "hab"],
-    #         "Machine": ["ma", "sin"],
-    #         "Learning": ["lia", "ning"],
-    #         "Hakkast": ["ha", "ka", "si", "te"],
-    #         "AI": ["ai"],
-    #         "NHS": ["en", "ha", "si"],
-    #         "API": ["a", "pi", "ai"]
-    #     }
-        
-    #     if word in common_splits:
-    #         return common_splits[word]
-        
-    #     # 默認每2-3個字母為一個音節
-    #     syllables = []
-    #     word_lower = word.lower()
-    #     i = 0
-    #     while i < len(word_lower):
-    #         if i + 2 < len(word_lower):
-    #             syllables.append(word_lower[i:i+2])
-    #             i += 2
-    #         else:
-    #             syllables.append(word_lower[i:])
-    #             break
-        
-    #     return syllables if syllables else [word.lower()]
-
-
-
-async def generate_podcast_script_with_agents(articles, max_minutes=25):
-    """
-    Generate podcast script with agents - main function from agents.py
-    This is the primary function for agent-based podcast script generation
-    Returns both original and TTS-ready versions
-    """
-    ai_service_instance = AIService()
-    result = await ai_service_instance.generate_podcast_script_with_agents(articles, max_minutes)
-    
-    # 為了向後兼容，如果調用者期待單一腳本，返回原始腳本
-    # 但同時提供TTS版本
-    if isinstance(result, dict) and "original_script" in result:
-        # 新格式：返回字典包含兩個版本
-        return result
-    else:
-        # 舊格式：返回單一腳本（向後兼容）
-        return result

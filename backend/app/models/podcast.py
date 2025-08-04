@@ -44,10 +44,7 @@ class PodcastResponse(BaseModel):
     audioUrl: Optional[str] = None
     audioDuration: Optional[int] = None
 
-#class PodcastScript(BaseModel):
-#   title: str
-#   hosts: list[str]
-#    content: str
+
 class PodcastScriptContent(BaseModel):
     speaker: str
     text: str
@@ -59,6 +56,21 @@ class PodcastScript(BaseModel):
     title: str
     hosts: List[str]
     content: List[PodcastScriptContent]
+
+
+# class PydanticPodcastScript(BaseModel):
+#     title: str
+#     hosts: List[str]  
+#     full_dialogue: str  
+#     estimated_duration_minutes: int
+#     key_points: List[str]
+#     sources_mentioned: List[str]
+
+class EnglishTranslationResult(BaseModel):
+    """英文翻譯結果模型"""
+    original_texts: List[str]  # 翻譯前的英文文本列表
+    translated_texts: List[str]  # 翻譯後的中文文本列表
+    processed_content: str  # 替換英文後的完整文本
 
 # 別名，為了向後兼容
 PodcastSegment = PodcastScriptContent

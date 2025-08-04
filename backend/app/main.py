@@ -5,14 +5,13 @@ import os
 from dotenv import load_dotenv
 
 from app.core.config import settings
-from app.routes import podcasts
-from app.routers import subscription, crawler
+from app.routers import translation, tts, audio, ai
 
 # Load environment variables
 load_dotenv()
 
 app = FastAPI(
-    title="Hakka AI Podcast Generator",
+    title="Hakkast",
     description="AI-powered personalized Hakka podcast generator with 3-step pipeline: Chinese generation → Hakka translation → TTS",
     version="1.0.0"
 )
@@ -30,9 +29,12 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include routers
-app.include_router(podcasts.router, prefix="/api/podcasts", tags=["podcasts"])
-app.include_router(subscription.router, prefix="/api", tags=["subscription"])
-app.include_router(crawler.router, prefix="/api", tags=["crawler"])
+# app.include_router(podcasts.router, prefix="/api/podcasts", tags=["podcasts"])
+# app.include_router(subscription.router, prefix="/api", tags=["subscription"])
+app.include_router(translation.router, prefix="/api", tags=["translation"])
+app.include_router(tts.router, prefix="/api", tags=["tts"])
+app.include_router(audio.router, prefix="/api", tags=["audio"])
+app.include_router(ai.router, prefix="/api", tags=["ai"])
 
 @app.get("/")
 async def root():

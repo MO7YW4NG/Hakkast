@@ -1,5 +1,4 @@
 import os
-import uuid
 import logging
 from typing import Optional, Dict, Any
 import httpx
@@ -7,8 +6,6 @@ from pathlib import Path
 from app.core.config import settings
 import google.genai as genai
 from google.genai import types
-import wave
-
 
 logger = logging.getLogger(__name__)
 
@@ -66,29 +63,6 @@ class TTSService:
         except Exception as e:
             logger.error(f"TTS Logout failed: {e}")
     
-    async def get_text_type_options(self) -> Optional[Dict[str, Any]]:
-        """Get available text type options for TTS"""
-        try:
-            if not self.headers:
-                await self.login()
-                
-            if not self.headers:
-                return None
-                
-            response = await self.client.get(
-                f'{self.base_url}/api/v1/tts/synthesize/text-type-options',
-                headers=self.headers
-            )
-            
-            if response.status_code == 200:
-                data = response.json()
-                logger.info(f"Available text types: {data}")
-                return data
-                
-        except Exception as e:
-            logger.error(f"Failed to get text type options: {e}")
-            
-        return None
 
     async def get_models(self) -> Optional[Dict[str, Any]]:
         """Get available TTS voice models"""
@@ -1100,51 +1074,26 @@ class TTSService:
     
     
     
-    async def get_audio_info(self, audio_id: str) -> Optional[Dict[str, Any]]:
-        """Get information about generated audio"""
-        audio_path = self.audio_dir / f"{audio_id}.wav"
-        
-        if not audio_path.exists():
-            return None
-            
-        return {
-            "audio_id": audio_id,
-            "audio_path": str(audio_path),
-            "audio_url": f"/static/audio/{audio_id}.wav",
-            "exists": True
-        }
-    
-    async def delete_audio(self, audio_id: str) -> bool:
-        """Delete generated audio file"""
-        try:
-            audio_path = self.audio_dir / f"{audio_id}.wav"
-            if audio_path.exists():
-                audio_path.unlink()
-                return True
-            return False
-        except Exception as e:
-            logger.error(f"Failed to delete audio {audio_id}: {e}")
-            return False
-    
     async def close(self):
         """Close the HTTP client"""
         await self.client.aclose()
 
-    #gemini TTS
+    # Gemini TTS integration
     async def generate_gemini_tts(self, text: str, output_path: str) -> str:
         api_key = getattr(settings, "GEMINI_API_KEY", None)
         if not api_key:
             raise RuntimeError("GEMINI_API_KEY not set in environment or settings")
+        prompt = "Instruction: Read in a standard Taiwanese Mandarin accent. The delivery should have a relatively flat intonation, avoiding dramatic pitch fluctuations or overly formal, enunciated pronunciation. The speaking style should be soft, gentle, and friendly, with a warm and polite tone. The pronunciation should feature less distinct retroflex sounds:\n"
         client = genai.Client(api_key=api_key)
         response = client.models.generate_content(
             model="gemini-2.5-flash-preview-tts",
-            contents=text,
+            contents=prompt + text,
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO"],
                 speech_config=types.SpeechConfig(
                     voice_config=types.VoiceConfig(
                         prebuilt_voice_config=types.PrebuiltVoiceConfig(
-                            voice_name="Despina"
+                            voice_name="Zephyr"
                         )
                     )
                 ),
