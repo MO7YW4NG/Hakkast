@@ -33,6 +33,13 @@ class ContentAnalysis(BaseModel):
     content_freshness: str  # "current", "evergreen", "historical"
 
 
+class EnglishTranslationResult(BaseModel):
+    """英文翻譯結果模型"""
+    original_texts: List[str]  # 翻譯前的英文文本列表
+    translated_texts: List[str]  # 翻譯後的中文文本列表
+    processed_content: str  # 替換英文後的完整文本
+
+
 class PydanticAIService:
     """使用 Pydantic AI ( TWCC AFS 和 Gemini ) - 從 pydantic_ai_service.py 合併"""
  
@@ -53,6 +60,29 @@ class PydanticAIService:
             self.use_twcc = False
         else:
             raise ValueError("需要設定 TWCC_API_KEY + TWCC_BASE_URL 或 GEMINI_API_KEY")
+        
+        # 初始化英文翻譯 agent (使用 Gemini 2.5 Pro)
+        if settings.GEMINI_API_KEY:
+            self.gemini_pro_model = GeminiModel('gemini-2.5-pro')  # 使用更強大的 Pro 版本
+            self.english_translator = Agent(
+                model=self.gemini_pro_model,
+                result_type=EnglishTranslationResult,
+                system_prompt="""
+                你是一個專業的英文翻譯agent。你的任務是：
+                1. 從輸入文本中識別並提取所有英文單字、片語和句子
+                2. 將這些英文內容翻譯成自然流暢的繁體中文
+                3. 提供翻譯前後的對照列表
+                
+                翻譯原則：
+                - 保持原意不變
+                - 使用自然的中文表達
+                - 專業術語要準確翻譯
+                - 品牌名稱可保留原文或使用常見中文譯名
+                """
+            )
+        else:
+            self.gemini_pro_model = None
+            self.english_translator = None
         
     async def generate_podcast_script(
         self, 
@@ -253,6 +283,73 @@ class PydanticAIService:
             # default:dialogue_agent
             result = await self.dialogue_agent.run(prompt)
             return result.data
+
+    async def translate_english_to_chinese(self, text: str) -> EnglishTranslationResult:
+        """
+        使用 Gemini 2.5 Pro 處理英文翻譯
+        1. 將英文從文本提取
+        2. 翻譯成全中文文本  
+        3. 回傳兩個列表，各自儲存翻譯前文本和翻譯後文本
+        4. 將原文中的英文部分根據翻譯結果進行替換
+        """
+        if not self.english_translator:
+            # 如果沒有翻譯 agent，返回空結果
+            return EnglishTranslationResult(
+                original_texts=[],
+                translated_texts=[],
+                processed_content=text
+            )
+        
+        try:
+            prompt = f"""
+            請處理以下文本中的英文內容：
+
+            輸入文本：
+            {text}
+
+            處理要求：
+            1. 識別並提取文本中所有的英文單字、片語、句子
+            2. 將這些英文內容翻譯成自然流暢的繁體中文
+            3. 提供原文英文和中文翻譯的對照列表
+
+            注意事項：
+            - 專業術語要準確翻譯
+            - 使用常見中文譯名
+            - 保持原文的格式和結構
+            - 確保翻譯自然流暢
+            """
+            
+            result = await self.english_translator.run(prompt)
+            translation_data = result.data
+            
+            # 進行英文替換，生成處理後的文本
+            processed_content = text
+            if translation_data.original_texts and translation_data.translated_texts:
+                # 確保兩個列表長度一致
+                min_length = min(len(translation_data.original_texts), len(translation_data.translated_texts))
+                
+                for i in range(min_length):
+                    original_english = translation_data.original_texts[i]
+                    chinese_translation = translation_data.translated_texts[i]
+                    
+                    # 替換原文中的英文部分
+                    processed_content = processed_content.replace(original_english, chinese_translation)
+            
+            # 返回包含處理後內容的結果
+            return EnglishTranslationResult(
+                original_texts=translation_data.original_texts,
+                translated_texts=translation_data.translated_texts,
+                processed_content=processed_content
+            )
+            
+        except Exception as e:
+            print(f"English translation error: {e}")
+            # 如果翻譯失敗，返回原文
+            return EnglishTranslationResult(
+                original_texts=[],
+                translated_texts=[],
+                processed_content=text
+            )
 
     async def convert_english_to_romanization(self, text: str) -> str:
         """將文本中的英文單字轉換成帶數字標調的羅馬拼音格式"""
@@ -787,13 +884,31 @@ class AIService:
         # 合併同主持人發言，並在不同主持人時換行
         merged_lines = merge_same_speaker_lines(dialogue)
         
-        # 處理英文轉換
+        # 處理英文轉換 - 使用 Gemini 2.5 Pro 英文翻譯 agent
         print("正在處理腳本中的英文內容...")
         processed_lines = []
+        
+        # 初始化翻譯服務
+        translation_service = PydanticAIService(use_twcc=False)  # 強制使用 Gemini
+        
         for line in merged_lines:
-            # 暫時跳過英文處理，直接使用原始內容
-            # TODO: 如果需要在這裡處理英文，應該在翻譯階段處理
-            processed_lines.append(line)
+            try:
+                # 使用新的英文翻譯 agent 處理每一行
+                translation_result = await translation_service.translate_english_to_chinese(line)
+                
+                # 如果有英文內容被翻譯，顯示翻譯對照
+                if translation_result.original_texts:
+                    print(f"英文翻譯處理:")
+                    for orig, trans in zip(translation_result.original_texts, translation_result.translated_texts):
+                        print(f"  {orig} -> {trans}")
+                
+                # 使用處理後的內容（無論是否有翻譯都包含在 processed_content 中）
+                processed_lines.append(translation_result.processed_content)
+                    
+            except Exception as e:
+                print(f"處理行 '{line[:50]}...' 時發生錯誤: {e}")
+                # 如果處理失敗，使用原始內容
+                processed_lines.append(line)
         
         # 轉成結構化陣列
         content = []
