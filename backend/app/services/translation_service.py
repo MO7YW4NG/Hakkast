@@ -10,7 +10,7 @@ class TranslationService:
     """Service for translating Traditional Chinese to Hakka using Hakka AI Hackathon API"""
     
     def __init__(self):
-        self.client = httpx.AsyncClient(timeout=30.0, verify=False)  # SSL verification disabled
+        self.client = httpx.AsyncClient(timeout=15.0, verify=False)  # SSL verification disabled
         self.base_url = settings.HAKKA_TRANSLATE_API_URL
         self.username = settings.HAKKA_USERNAME
         self.password = settings.HAKKA_PASSWORD
@@ -76,13 +76,13 @@ class TranslationService:
             
             # 根據腔調選擇 endpoint
             if dialect == "hailu":
-                hanzi_endpoint = "MT/translate/hakka_hailu_zh_hk"
-                py_endpoint = "MT/translate/hakka_hailu_hk_py"
-                tone_endpoint = "MT/translate/hakka_hailu_hk_py_tone"
+                hanzi_endpoint = "/MT/translate/hakka_hailu_zh_hk"
+                py_endpoint = "/MT/translate/hakka_hailu_hk_py"
+                tone_endpoint = "/MT/translate/hakka_hailu_hk_py_tone"
             else:
-                hanzi_endpoint = "MT/translate/hakka_zh_hk"
-                py_endpoint = "MT/translate/hakka_hk_py"
-                tone_endpoint = "MT/translate/hakka_hk_py_tone"
+                hanzi_endpoint = "/MT/translate/hakka_zh_hk"
+                py_endpoint = "/MT/translate/hakka_hk_py"
+                tone_endpoint = "/MT/translate/hakka_hk_py_tone"
 
             payload = {'input': chinese_text}
             # 中文→客語漢字

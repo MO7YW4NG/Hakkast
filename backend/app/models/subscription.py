@@ -9,7 +9,6 @@ class SubscriptionFrequency(str, Enum):
 
 class LanguageMode(str, Enum):
     HAKKA = "hakka"
-    MIXED = "mixed"
     BILINGUAL = "bilingual"
 
 class ToneStyle(str, Enum):

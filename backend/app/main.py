@@ -1,12 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-import os
 from dotenv import load_dotenv
-
+import sys
+import asyncio
 from app.core.config import settings
-from app.routers import translation, tts, audio, ai
+from app.routers import podcasts, tts, audio, ai
 
+# **Event loop strategy must be set before importing any module**
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    
 # Load environment variables
 load_dotenv()
 
@@ -29,9 +33,8 @@ app.add_middleware(
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Include routers
-# app.include_router(podcasts.router, prefix="/api/podcasts", tags=["podcasts"])
+app.include_router(podcasts.router, prefix="/api", tags=["podcasts"])
 # app.include_router(subscription.router, prefix="/api", tags=["subscription"])
-app.include_router(translation.router, prefix="/api", tags=["translation"])
 app.include_router(tts.router, prefix="/api", tags=["tts"])
 app.include_router(audio.router, prefix="/api", tags=["audio"])
 app.include_router(ai.router, prefix="/api", tags=["ai"])

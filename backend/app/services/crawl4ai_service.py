@@ -1,6 +1,7 @@
 from crawl4ai import AsyncWebCrawler
 from datetime import datetime
 from app.models.crawler import CrawledContent, ContentType
+from app.models.podcast import Topic
 from bs4 import BeautifulSoup
 import requests
 import re
@@ -80,7 +81,7 @@ def get_arxiv_license(arxiv_id: str) -> str:
 
     return ""
 
-def fetch_arxiv_html_content(arxiv_id: str) -> str:
+def fetch_arxiv_abstract(arxiv_id: str) -> str:
     """抓 arXiv 論文 HTML 摘要"""
     url = f"https://arxiv.org/abs/{arxiv_id}"
     try:
@@ -126,22 +127,22 @@ def is_usable_license(license_url: str) -> bool:
         and "nd" not in license_url
     )
 
-async def crawl_news(topic: str, max_articles: int = 3):
+async def crawl_news(topic: Topic, max_articles: int = 3):
     """Optimized news crawling function with better error handling and structure"""
-    if topic == "research_deep_learning":
+    if topic == Topic.research_deep_learning:
         return await _crawl_research_papers(topic, max_articles)
     
     # Handle general web crawling
     return await _crawl_general_news(topic, max_articles)
 
-async def _crawl_research_papers(topic: str, max_articles: int):
+async def _crawl_research_papers(topic: Topic, max_articles: int):
     """Crawl research papers from AlphaXiv API"""
     crawled = []
     
     try:
         found = 0
         page_num = 1
-        page_size = 50
+        page_size = 10
         
         while found < max_articles:
             api_url = f"https://api.alphaxiv.org/v2/papers/trending-papers?page_num={page_num}&sort_by=Hot&page_size={page_size}"
@@ -198,7 +199,7 @@ async def _crawl_research_papers(topic: str, max_articles: int):
         logger.error(f"Research crawling failed: {e}")
         return []
 
-async def _crawl_general_news(topic: str, max_articles: int):
+async def _crawl_general_news(topic: Topic, max_articles: int):
     """Crawl general news articles"""
     crawled = []
     
@@ -254,7 +255,8 @@ def _extract_paper_data(item):
 def _create_research_content_item(paper_data, topic, license_url):
     """Create CrawledContent item for research paper"""
     arxiv_id = paper_data['arxiv_id']
-    html_content = fetch_arxiv_html_content(arxiv_id)
+    html_content = fetch_arxiv_abstract(arxiv_id)
+    # html_content = fetch_arxiv_full_html(arxiv_id) (超大)
     url = f"https://arxiv.org/abs/{arxiv_id}"
     
     published_at = None
@@ -308,12 +310,12 @@ def _create_news_content_item(result, topic):
         relevance_score=0.0
     )
 
-def _list_page_url_for_topic(topic: str):
+def _list_page_url_for_topic(topic: Topic):
     return {
         "technology_news": "https://www.openaccessgovernment.org/category/open-access-news/technology-news/",
         "finance_economics": "https://www.openaccessgovernment.org/category/open-access-news/finance-news/",
         "research_deep_learning": "https://api.alphaxiv.org/v2/papers/trending-papers?page_num=1&sort_by=Hot&page_size=5",
-    }.get(topic, "")
+    }.get(topic.name, "")
 
 def _extract_article_links(list_page_url: str, limit: int = 5):
     try:

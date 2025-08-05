@@ -1,0 +1,68 @@
+{
+  "title": "Hakkast 哈客播新聞討論",
+  "hosts": [
+    {
+      "name": "佳昀",
+      "gender": "female",
+      "dialect": "sihxian",
+      "personality": "理性、專業、分析"
+    },
+    {
+      "name": "敏權",
+      "gender": "male",
+      "dialect": "sihxian",
+      "personality": "幽默、活潑、互動"
+    }
+  ],
+  "content": [
+    {
+      "speaker": "佳昀",
+      "text": "大家好，我是佳昀。",
+      "hakka_text": "大家好，𠊎係佳昀。",
+      "romanization": "tai55 ga24 ho31, ngai11 he55 ga24 iun11.",
+      "romanization_tone": "tai gaˊ hoˋ, ngaiˇ he gaˊ iunˇ."
+    },
+    {
+      "speaker": "敏權",
+      "text": "我是敏權，歡迎收聽哈客播。",
+      "hakka_text": "𠊎係敏權，歡迎收聽哈客播。",
+      "romanization": "ngai11 he55 men31 kien11, fon24 ngiang11 su11 tang24 ha24 hag2 bo55.",
+      "romanization_tone": "ngaiˇ he menˋ kienˇ, fonˊ ngiangˇ suˇ tangˊ haˊ hagˋ bo."
+    },
+    {
+      "speaker": "佳昀",
+      "text": "今天我們為大家帶來三則重要新聞，讓我們一起看看！ 欸，你覺得AI現在夠聰明了嗎？其實啊，現在連AI自己都在學怎麼『進化』，目標是達到超越人類的智能耶！ 敏權，聽到AI連『進化』這詞都用上了，你腦中浮現的第一個畫面是什麼？ 我想到，AI現在不光是被動地學習，它們會主動去試驗不同的演算法、不同的模型架構，找出最高效能的那一個。 這種自我迭代的能力，其實比我們人類單純吸收知識來得更具爆發性。 不過，這也讓人思考，當它們超越人類理解的範疇，我們如何確保這個『進化』是往好的方向走呢？。 大家有沒有覺得AI生圖雖然很厲害，但偶爾還是會出些怪圖？這其實跟現行很多模型都用一個叫做VAE的『壓縮技術』有關。不過最近有個新研究，他們提出一個叫PixelNerd的方法，直接回歸到像素層面，不需要那個VAE，就能單一階段生成高品質圖片，而且效果還超好！",
+      "hakka_text": "今晡日𫣆為大家帶來三則重要新聞，分𠊎等共下看喔！欸，你試著 AI 這下罅聰明了吂？其實喔，這下連 AI 自家就有在該學仰仔『進化』，目標係達到超越人類个智能呢！敏權，聽著 AI 連『進化』這詞都用著吔，若腦中浮現个第一個畫面係麼个？𠊎想著，AI 這下毋單淨係分動地學習，佢兜會主動去試驗無共樣个演算法、無共樣个模型架構，尋出最高效能个該個。這種自我迭代个能力，其實比𫣆人類單純吸收知識來个還較有爆發性。毋過，這乜分人思考，當佢兜超越人類理解个範圍，𫣆愛仰仔確定這個『進化』係對好个方向行呢？。 大家試著有試著無 AI 生圖雖然當慶，毋過三不二時還係會出兜仔怪圖？這其實摎這下當多模型喔都用一個安到嗬 VAE 个『壓縮技術』有關。毋過咧，佢這兜提出一隻安到 PixelNerd 个方法，直接回歸到像素層面，無需要該啦 VAE，就做得單一階段生成高品質圖片，毋過效果還係蓋好！",
+      "romanization": "gim24 bu24 ngid2 en24 vi55 tai55 ga24 dai55 loi11 sam24 zed2 cung55 ieu55 xin24 vun11, bun24 ngai11 nen24 kiung55 ha55 kon55 o24! e24, ng11 cii55 do31 AI ia31 ha55 la55 cung24 min11 le31 mang11? ki11 siid5 o31, ia31 ha55 lien11 AI qid2 ga24 qiu55 iu24 di55 ge55 hog5 ngiong31 e31 『 jin55 fa55 』, mug2 peu24 he55 tad5 do55 ceu24 ied5 ngin11 lui55 ge55 zii55 nen11 ne11! men31 kien11, tang24 do31 AI lien11 『 jin55 fa55 』 ia31 cii11 du24 iung55 do31 e11, ngia24 no31 zung24 feu11 hien55 ge55 ti55 id2 ge55 fa55 mien55 he55 ma31 gai55? ngai11 xiong31 do31, AI ia31 ha55 m11 dan24 qiang55 he55 bun24 tung24 ti55 hog5 xib5, gi11 deu24 voi55 zu31 tung55 hi55 cii55 ngiam55 mo11 kiung55 iong55 ge55 ien24 son55 fab2 、 mo11 kiung55 iong55 ge55 mu11 hin11 ga55 gieu55, qim11 cud2 zui55 go24 hau31 nen11 e55 ge55 e55. ia31 zung31 cii55 ngo24 died2 toi55 ge55 nen11 lid5, ki11 siid5 bi31 en24 ngin11 lui55 dan24 sun11 kib2 su24 zii24 siid2 loi11 ge55 han11 ka55 iu24 pau55 fad2 xin55. m11 go55, ia31 me55 bun24 ngin11 sii24 kau31, dong55 gi11 deu24 ceu24 ied5 ngin11 lui55 li24 gie31 ge55 fam55 vi11, en24 oi55 ngiong31 e11 kog2 tin55 ia31 ge55 『 jin55 fa55 』 he55 dui55 ho31 ge55 fong24 hiong55 hang11 ne11?. tai55 ga24 cii55 do31 iu24 cii55 do31 mo11 AI sen24 tu11 sui24 ien11 dong24 kiang55, m11 go55 sam24 bud2 ngi55 sii11 han11 he55 voi55 cud2 deu24 e31 guai55 tu11? ia31 ki11 siid5 lau24 ia31 ha55 dong24 do24 mo11 hin11 o24 du55 iung55 id2 ge55 on24 do55 ho31 VAE ge55 『 ab2 sog2 gi24 sud5 』 iu24 guan24. m11 go55 le31, gi11 ia31 deu24 ti11 cud2 id2 zag2 on24 do55 PixelNerd ge55 fong24 fab2, ciid5 jiab2 fi11 gui24 do55 qiong55 su55 cen11 mien55, mo11 xi24 ieu55 ge55 la31 VAE, qiu55 zo55 ded2 dan24 id2 gie24 ton55 sang24 siin11 go24 pin31 ziid2 tu11 pien31, m11 gu55 hau31 go31 han11 he55 goi55 ho31!",
+      "romanization_tone": "gimˊ buˊ ngidˋ enˊ vi tai gaˊ dai loiˇ samˊ zedˋ cung ieu xinˊ vunˇ, bunˊ ngaiˇ nenˊ kiung ha kon oˊ! eˊ, ngˇ cii doˋ AI iaˋ ha la cungˊ minˇ leˋ mangˇ? kiˇ siid oˋ, iaˋ ha lienˇ AI qidˋ gaˊ qiu iuˊ di ge hog ngiongˋ eˋ 『 jin fa 』, mugˋ peuˊ he tad do ceuˊ ied nginˇ lui ge zii nenˇ neˇ! menˋ kienˇ, tangˊ doˋ AI lienˇ 『 jin fa 』 iaˋ ciiˇ duˊ iung doˋ eˇ, ngiaˊ noˋ zungˊ feuˇ hien ge ti idˋ ge fa mien he maˋ gai? ngaiˇ xiongˋ doˋ, AI iaˋ ha mˇ danˊ qiang he bunˊ tungˊ ti hog xib, giˇ deuˊ voi zuˋ tung hi cii ngiam moˇ kiung iong ge ienˊ son fabˋ 、 moˇ kiung iong ge muˇ hinˇ ga gieu, qimˇ cudˋ zui goˊ hauˋ nenˇ e ge e. iaˋ zungˋ cii ngoˊ diedˋ toi ge nenˇ lid, kiˇ siid biˋ enˊ nginˇ lui danˊ sunˇ kibˋ suˊ ziiˊ siidˋ loiˇ ge hanˇ ka iuˊ pau fadˋ xin. mˇ go, iaˋ me bunˊ nginˇ siiˊ kauˋ, dong giˇ deuˊ ceuˊ ied nginˇ lui liˊ gieˋ ge fam viˇ, enˊ oi ngiongˋ eˇ kogˋ tin iaˋ ge 『 jin fa 』 he dui hoˋ ge fongˊ hiong hangˇ neˇ?. tai gaˊ cii doˋ iuˊ cii doˋ moˇ AI senˊ tuˇ suiˊ ienˇ dongˊ kiang, mˇ go samˊ budˋ ngi siiˇ hanˇ he voi cudˋ deuˊ eˋ guai tuˇ? iaˋ kiˇ siid lauˊ iaˋ ha dongˊ doˊ moˇ hinˇ oˊ du iung idˋ ge onˊ do hoˋ VAE ge 『 abˋ sogˋ giˊ sud 』 iuˊ guanˊ. mˇ go leˋ, giˇ iaˋ deuˊ tiˇ cudˋ idˋ zagˋ onˊ do PixelNerd ge fongˊ fabˋ, ciid jiabˋ fiˇ guiˊ do qiong su cenˇ mien, moˇ xiˊ ieu ge laˋ VAE, qiu zo dedˋ danˊ idˋ gieˊ ton sangˊ siinˇ goˊ pinˋ ziidˋ tuˇ pienˋ, mˇ gu hauˋ goˋ hanˇ he goi hoˋ!"
+    },
+    {
+      "speaker": "敏權",
+      "text": "欸，佳昀，你一說到AI連『進化』這詞都用上了，我腦中第一個畫面是它們會不會開始自己開源節流，甚至學會『摸魚』啦！哈哈，玩笑歸玩笑，但這真的讓我想，如果AI能自己迭代、自己進化，那是不是代表它們也可能會『避開』那些人類設定的規範，走出自己的一套啊？像剛剛說的生圖技術，會不會哪天它們就直接進化到不需要我們這些人類的參考圖了？到時候可能我們連圖都看不懂它們在畫什麼！。",
+      "hakka_text": "欸，佳昀，你一講著 AI 連『進化』這詞都用著吔，𠊎腦中第一個畫面係佢等會開始自家開源節流，甚至學會『摸魚仔』啦！哈哈，玩笑歸玩笑，毋過這正經分𠊎想，係講 AI 做得自家迭代、自家進化，該係毋係代表佢這兜乜有可能會『避開』該兜人類設定个規範，行出自家个一身啊？像該下講个生圖技術，會哪日佢兜就直接進化到無需要𫣆這兜人類个參考圖了無？到時節可能𠊎等連圖都看毋識佢等在畫麼个！。",
+      "romanization": "e24, ga24 iun11, ng11 id2 gong31 do31 AI lien11 『 jin55 fa55 』 ia31 cii11 du24 iung55 do31 e11, ngai11 no31 zung24 ti55 id2 e55 fa55 mien55 he55 i11 den24 voi55 koi24 sii31 qid2 ga24 koi24 ngien11 jied2 liu11, siim31 zii55 hog5 fi55 『 mia24 ng11 e31 』 la11! ha24 ha24, nguan11 seu55 gui24 nguan11 seu55, m11 go55 ia31 ziin55 gin24 bun24 ngai11 xiong31, he55 gong31 AI zo55 ded2 qid2 ga24 died2 toi55 、 qid2 ga24 jin55 fa55, ge55 he55 m11 he55 toi55 beu31 gi11 ia31 deu24 me55 iu24 ko31 nen11 voi55 『 pid2 koi24 』 ge55 deu24 ngin11 lui55 sad2 tin55 ge55 gui24 fam55, hang11 cud2 qid2 ga24 ge55 id2 siin24 a55? qiong55 ga55 ha55 gong31 ge55 sang24 tu11 gi24 sud5, voi55 nai55 ngid2 gi11 deu24 qiu55 ciid5 jiab2 jin55 fa55 do55 mo11 xi24 ieu55 en24 ia31 deu24 ngin11 lui55 ge55 cam24 kau31 tu11 le31 mo11? do55 sii11 jied2 ko31 nen11 ngai11 nen24 lien11 tu11 lu24 kon55 m11 siid2 i11 den24 te24 vag5 ma31 ge55!.",
+      "romanization_tone": "eˊ, gaˊ iunˇ, ngˇ idˋ gongˋ doˋ AI lienˇ 『 jin fa 』 iaˋ ciiˇ duˊ iung doˋ eˇ, ngaiˇ noˋ zungˊ ti idˋ e fa mien he iˇ denˊ voi koiˊ siiˋ qidˋ gaˊ koiˊ ngienˇ jiedˋ liuˇ, siimˋ zii hog fi 『 miaˊ ngˇ eˋ 』 laˇ! haˊ haˊ, nguanˇ seu guiˊ nguanˇ seu, mˇ go iaˋ ziin ginˊ bunˊ ngaiˇ xiongˋ, he gongˋ AI zo dedˋ qidˋ gaˊ diedˋ toi 、 qidˋ gaˊ jin fa, ge he mˇ he toi beuˋ giˇ iaˋ deuˊ me iuˊ koˋ nenˇ voi 『 pidˋ koiˊ 』 ge deuˊ nginˇ lui sadˋ tin ge guiˊ fam, hangˇ cudˋ qidˋ gaˊ ge idˋ siinˊ a? qiong ga ha gongˋ ge sangˊ tuˇ giˊ sud, voi nai ngidˋ giˇ deuˊ qiu ciid jiabˋ jin fa do moˇ xiˊ ieu enˊ iaˋ deuˊ nginˇ lui ge camˊ kauˋ tuˇ leˋ moˇ? do siiˇ jiedˋ koˋ nenˇ ngaiˇ nenˊ lienˇ tuˇ luˊ kon mˇ siidˋ iˇ denˊ teˊ vag maˋ ge!."
+    },
+    {
+      "speaker": "佳昀",
+      "text": "哇塞，你有沒有想過，未來科學研究會變怎樣？現在LLM催生了「AI科學家」，甚至寫的論文都被國際研討會接受了！感覺AI真的要顛覆我們對科學發現的想像，太狂了吧！ 好的，今天我們從AI系統如何自我演進的潛力開始聊起，看到了技術發展的無限可能。接著我們也探索了像PixNerd這樣在像素層級上整合的擴散模型，如何為圖像生成帶來新的突破。最後，我們也回頭檢視了AI科學家們的能力發展路徑，為大家描繪出未來在這個領域精進的方向。",
+      "hakka_text": "哇塞，你有想過無，未來科學研究會仰般形？這下 LLM 催生了「AI 科學家」，甚至呢寫个論文都分國際研討會接受咧！感覺 AI 正經愛改變𫣆个對科學發現个想像，忒狂吔啦！好，今晡日𠊎等對 AI 系統仰般自我演進个潛力開始講起，看著技術發展个無限可能。續等𠊎兜乜探索了像 PixNerd 恁樣在像素層級頂高整合个擴散模型，愛仰吔同圖像生成帶來新个突破。盡尾，𫣆乜遽遽回頭看清楚 AI 科學家个能力發展路徑，為大家描寫出未來在這個領域精進个方向。",
+      "romanization": "va55 sed2, ng11 iu24 xiong31 go55 mo11, vi55 loi11 ko24 hog5 ngien24 giu55 fi55 ngiong31 ban24 hin11? ia31 ha55 LLM cui24 sen24 le24 「 AI ko24 hog5 ga24 」, siim31 zii55 ne11 xia31 ge55 lun55 vun11 du55 bun24 gued2 ji55 ngien24 to31 fi55 jiab2 su55 le31! gam31 gog2 AI ziin55 gin24 oi55 goi31 bien55 en24 ge55 dui55 ko24 hog5 fad2 hien55 ge55 xiong31 xiong55, ted2 kong11 e11 la31! hau55, gim24 bu24 ngid2 ngai11 nen24 dui55 AI ne55 tung31 ngiong31 ban24 cii55 ngo24 ien24 jin55 ge55 xiam11 lid5 koi24 sii31 gong31 hi31, kon55 do31 gi24 sud5 fad2 zan31 ge55 mo11 han55 ko31 nen11. sa55 den31 ngai11 deu24 me55 tam31 sog2 e31 qiong55 PixNerd an31 ngiong11 di55 qiong55 su55 cen11 gib2 dang31 go24 ziin31 hab5 ge55 kong31 san55 mo11 hin11, oi55 ngiong31 e11 tung11 tu11 xiong55 sang24 sang11 dai55 loi11 xin24 ge55 tud2 po55. qin55 mi24, en24 me55 giag2 giag2 fi11 teu11 kon55 qin24 cu31 AI ko24 hog5 ga24 ge55 nen11 lid5 fad2 zan31 lu55 gang55, vi55 tai55 ga24 meu11 xia31 cud2 vi55 loi11 di55 ia31 ge55 liang24 ved2 jin24 jin55 ge55 fong24 hiong55.",
+      "romanization_tone": "va sedˋ, ngˇ iuˊ xiongˋ go moˇ, vi loiˇ koˊ hog ngienˊ giu fi ngiongˋ banˊ hinˇ? iaˋ ha LLM cuiˊ senˊ leˊ 「 AI koˊ hog gaˊ 」, siimˋ zii neˇ xiaˋ ge lun vunˇ du bunˊ guedˋ ji ngienˊ toˋ fi jiabˋ su leˋ! gamˋ gogˋ AI ziin ginˊ oi goiˋ bien enˊ ge dui koˊ hog fadˋ hien ge xiongˋ xiong, tedˋ kongˇ eˇ laˋ! hau, gimˊ buˊ ngidˋ ngaiˇ nenˊ dui AI ne tungˋ ngiongˋ banˊ cii ngoˊ ienˊ jin ge xiamˇ lid koiˊ siiˋ gongˋ hiˋ, kon doˋ giˊ sud fadˋ zanˋ ge moˇ han koˋ nenˇ. sa denˋ ngaiˇ deuˊ me tamˋ sogˋ eˋ qiong PixNerd anˋ ngiongˇ di qiong su cenˇ gibˋ dangˋ goˊ ziinˋ hab ge kongˋ san moˇ hinˇ, oi ngiongˋ eˇ tungˇ tuˇ xiong sangˊ sangˇ dai loiˇ xinˊ ge tudˋ po. qin miˊ, enˊ me giagˋ giagˋ fiˇ teuˇ kon qinˊ cuˋ AI koˊ hog gaˊ ge nenˇ lid fadˋ zanˋ lu gang, vi tai gaˊ meuˇ xiaˋ cudˋ vi loiˇ di iaˋ ge liangˊ vedˋ jinˊ jin ge fongˊ hiong."
+    },
+    {
+      "speaker": "敏權",
+      "text": "哇，佳昀總結得真好，聽了都覺得很有收穫。其實我特別有感觸的是，很多小細節真的會被我們忽略掉。如果能注意，生活會很不一樣。",
+      "hakka_text": "哇，佳昀總結到還好哪，聽欸都試著當有收成。其實𠊎特別有感觸个係，當多細細節正經會分𫣆無注意著。係講做得注意，生活會蓋無共樣。",
+      "romanization": "va55, ga24 iun11 zung31 gied2 do55 han11 ho31 na24, tang24 e31 du24 cii55 do31 dong24 iu24 su24 siin11. ki11 siid5 ngai11 tid5 pied5 iu24 gam31 cug2 ge55 he55, dong24 do24 se55 se55 jied2 ziin55 gin24 voi55 bun24 en24 mo11 zu55 i55 do31. he55 gong31 zo55 ded2 zu55 i55, sen24 fad5 voi55 goi55 mo11 kiung55 iong55.",
+      "romanization_tone": "va, gaˊ iunˇ zungˋ giedˋ do hanˇ hoˋ naˊ, tangˊ eˋ duˊ cii doˋ dongˊ iuˊ suˊ siinˇ. kiˇ siid ngaiˇ tid pied iuˊ gamˋ cugˋ ge he, dongˊ doˊ se se jiedˋ ziin ginˊ voi bunˊ enˊ moˇ zu i doˋ. he gongˋ zo dedˋ zu i, senˊ fad voi goi moˇ kiung iong."
+    },
+    {
+      "speaker": "佳昀",
+      "text": "好的，時間真的過得很快，又到了我們說再見的時候了。今天我們透過這三則新聞，看到了許多不同的風景，不管是來自社區裡的溫暖互助，還是個人面對困難時展現的堅韌力量，甚至是提醒我們要多愛自己一點點，去感受生活中的小確幸。這些故事都提醒著我們，不管外面世界如何變化，我們心中都有能力去創造和感受那份美好。希望大家都能帶著這份溫暖和正能量，迎接接下來的每一天。下週同一時間，空中再會囉！",
+      "hakka_text": "好，時間正經過到當遽，又到吔𫣆講再會个時節吔。今晡日𫣆俚透過這三則新聞，看著當多無共樣个風景，不管係來自社區裡肚个溫暖互助，抑係個人面對困難時展現个堅韌力量，甚至提醒𫣆愛多愛自家一息息息，去感受生活中个小確幸。這兜故事都提醒𠊎等，毋管外背世界仰般變化，𠊎兜心肝肚都有能力去創造還有感受該份美好。希望大家都做得帶等這份溫暖摎正能量，迎接下來个每日。下禮拜共一個時間，空中再會哩喲！",
+      "romanization": "hau55, sii11 gien24 ziin55 gin24 go55 do55 dong24 giag2, iu55 do55 e11 en24 gong31 zai55 fi55 ge55 sii11 jied2 e11. gim24 bu24 ngid2 en24 li31 teu55 go55 ia31 sam24 zed2 xin24 vun11, kon55 do31 dong24 do24 mo11 kiung55 iong55 ge55 fung24 gin31, bud2 gon31 he55 loi11 cii55 sa55 ki24 di24 du31 ge55 vun24 non24 fu55 cu55, ia55 he55 ge55 ngin11 mien55 dui55 kun55 nan11 sii11 zan31 hien55 ge55 gien24 ngiun55 lid5 liong55, siim31 zii55 ti11 xiang31 en24 oi55 do24 oi55 qid2 ga24 id2 xid5 xid5 xid5, hi55 gam31 su55 sen24 fad5 zung24 ge55 seu31 kog2 hen55. ia31 deu24 gu55 sii55 lu11 ti11 xiang31 ngai11 den24, m11 gon31 ngo55 boi55 sii55 gie55 ngiong31 ban24 bien55 fa55, ngai11 deu24 xim24 gon24 du31 du55 iu24 nen11 lid5 hi55 cong31 co55 han11 iu24 gam31 su55 ge55 fun55 mi24 ho31. hi24 mong55 tai55 ga24 du55 zo55 ded2 dai55 den31 ia31 fun55 vun24 non24 lau24 ziin55 nen11 liong55, ngiang11 jiab2 ha24 loi11 e55 mi24 ngid2. ha55 li24 bai55 kiung55 id2 ge55 sii11 gien24, kung24 zung24 zai55 fi55 le24 io24 lio24!",
+      "romanization_tone": "hau, siiˇ gienˊ ziin ginˊ go do dongˊ giagˋ, iu do eˇ enˊ gongˋ zai fi ge siiˇ jiedˋ eˇ. gimˊ buˊ ngidˋ enˊ liˋ teu go iaˋ samˊ zedˋ xinˊ vunˇ, kon doˋ dongˊ doˊ moˇ kiung iong ge fungˊ ginˋ, budˋ gonˋ he loiˇ cii sa kiˊ diˊ duˋ ge vunˊ nonˊ fu cu, ia he ge nginˇ mien dui kun nanˇ siiˇ zanˋ hien ge gienˊ ngiun lid liong, siimˋ zii tiˇ xiangˋ enˊ oi doˊ oi qidˋ gaˊ idˋ xid xid xid, hi gamˋ su senˊ fad zungˊ ge seuˋ kogˋ hen. iaˋ deuˊ gu sii luˇ tiˇ xiangˋ ngaiˇ denˊ, mˇ gonˋ ngo boi sii gie ngiongˋ banˊ bien fa, ngaiˇ deuˊ ximˊ gonˊ duˋ du iuˊ nenˇ lid hi congˋ co hanˇ iuˊ gamˋ su ge fun miˊ hoˋ. hiˊ mong tai gaˊ du zo dedˋ dai denˋ iaˋ fun vunˊ nonˊ lauˊ ziin nenˇ liong, ngiangˇ jiabˋ haˊ loiˇ e miˊ ngidˋ. ha liˊ bai kiung idˋ ge siiˇ gienˊ, kungˊ zungˊ zai fi leˊ ioˊ lioˊ!"
+    }
+  ]
+}
