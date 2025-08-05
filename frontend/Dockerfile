@@ -1,19 +1,22 @@
 # Frontend Dockerfile
-FROM node:18-alpine as build
-
+FROM node:18-slim AS build
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 WORKDIR /app
 
 # Copy package files
-COPY package*.json ./
+COPY package.json ./
+COPY pnpm-lock.yaml ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN pnpm install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build the application
-RUN npm run build
+RUN pnpm run build
 
 # Production stage
 FROM nginx:alpine
