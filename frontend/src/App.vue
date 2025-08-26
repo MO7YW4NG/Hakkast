@@ -40,7 +40,7 @@
               :class="{ 'nav-link-active': $route.path === '/library' }"
             >
               <span class="text-lg mr-2">📚</span>
-              我的庫存
+              我的收藏
             </router-link>
             <router-link 
               to="/subscription" 

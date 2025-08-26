@@ -6,7 +6,7 @@
         <div>
           <div class="inline-flex items-center space-x-2 bg-hakkast-gold/10 rounded-full px-4 py-2 mb-4">
             <span class="text-2xl">📚</span>
-            <span class="text-sm font-medium text-hakkast-navy">我的播客庫存</span>
+            <span class="text-sm font-medium text-hakkast-navy">我的播客收藏</span>
           </div>
           <h1 class="text-4xl lg:text-5xl font-display font-bold text-hakkast-navy mb-2">
             您的<span class="text-gradient">播客收藏</span>
@@ -23,26 +23,30 @@
 
       <!-- Search & Filter Bar -->
       <div class="flex flex-col md:flex-row md:items-center md:flex-wrap gap-4 mb-8">
-        <input v-model="searchQuery" type="text" placeholder="搜尋標題、主題、內容..." class="input max-w-md" />
+        <input v-model="searchQuery" type="text" placeholder="搜尋標題、主題、內容..." class="input w-full md:max-w-lg md:flex-1 min-w-0" />
         <div class="flex-1"></div>
-        <div v-if="selectedIds.length > 0" class="flex gap-2">
+        <div v-if="selectedIds.length > 0" class="flex gap-2 shrink-0 whitespace-nowrap">
           <button class="btn btn-gold" @click="batchDelete"><span class="mr-2">🗑️</span>批次刪除</button>
           <button class="btn btn-ghost" @click="showToast('批次分享功能尚未實作')"><span class="mr-2">📤</span>批次分享</button>
           <button class="btn btn-ghost" @click="showToast('批次下載功能尚未實作')"><span class="mr-2">⬇️</span>批次下載</button>
         </div>
-        <div class="flex flex-wrap gap-2 ">
-          <button v-for="filter in filterOptions" :key="filter.value" @click="currentFilter = filter.value" :class="[
-            'px-4 py-2 rounded-xl font-medium transition-all',
-            currentFilter === filter.value ? 'bg-hakkast-gradient text-white shadow-lg' : 'bg-white text-hakkast-navy border border-gray-200 hover:border-hakkast-purple'
-          ]">
-            <span class="mr-2">{{ filter.emoji }}</span>{{ filter.label }}
-          </button>
-          <button v-for="lang in languageOptions" :key="lang.value" @click="currentLanguage = lang.value" :class="[
-            'px-4 py-2 rounded-xl font-medium transition-all',
-            currentLanguage === lang.value ? 'bg-hakkast-lavender text-white shadow-lg' : 'bg-white text-hakkast-lavender border border-gray-200 hover:border-hakkast-purple'
-          ]">
-            <span class="mr-2">🌐</span>{{ lang.label }}
-          </button>
+        <div class="flex flex-wrap gap-2 w-full mt-2 md:mt-0">
+          <div class="flex flex-wrap gap-2 w-full">
+            <button v-for="filter in filterOptions" :key="filter.value" @click="currentFilter = filter.value" :class="[
+              'px-4 py-2 rounded-xl font-medium transition-all text-sm',
+              currentFilter === filter.value ? 'bg-hakkast-gradient text-white shadow-lg' : 'bg-white text-hakkast-navy border border-gray-200 hover:border-hakkast-purple'
+            ]">
+              <span class="mr-2">{{ filter.emoji }}</span>{{ filter.label }}
+            </button>
+          </div>
+          <div class="flex flex-wrap gap-2 w-full">
+            <button v-for="lang in languageOptions" :key="lang.value" @click="currentLanguage = lang.value" :class="[
+              'px-4 py-2 rounded-xl font-medium transition-all text-sm',
+              currentLanguage === lang.value ? 'bg-hakkast-lavender text-white shadow-lg' : 'bg-white text-hakkast-lavender border border-gray-200 hover:border-hakkast-purple'
+            ]">
+              <span class="mr-2">🌐</span>{{ lang.label }}
+            </button>
+          </div>
         </div>
       </div>
 
