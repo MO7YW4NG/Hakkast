@@ -61,31 +61,8 @@
       <!-- Topics Selection -->
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-3">
-          <span class="mr-2">🏷️</span>感興趣的主題（可多選）
+          <span class="mr-2">🏷️</span>感興趣的主題
         </label>
-        
-        <!-- Traditional Topics -->
-        <div class="mb-4">
-          <h4 class="text-sm font-medium text-gray-600 mb-2 flex items-center">
-            <span class="mr-2">🏮</span>傳統客家主題
-          </h4>
-          <div class="grid grid-cols-2 gap-2">
-            <button
-              v-for="topic in availableTopics.filter(t => t.category === 'traditional')"
-              :key="topic.value"
-              type="button"
-              @click="toggleTopic(topic.value)"
-              :class="[
-                'p-3 rounded-lg border transition-all text-sm text-left',
-                form.topics.includes(topic.value)
-                  ? 'border-hakkast-purple bg-hakkast-purple/10 text-hakkast-purple'
-                  : 'border-gray-200 hover:border-gray-300'
-              ]"
-            >
-              <span class="mr-2">{{ topic.emoji }}</span>{{ topic.label }}
-            </button>
-          </div>
-        </div>
         
         <!-- Dynamic Topics with Web Crawling -->
         <div class="mb-4">
@@ -98,10 +75,10 @@
               v-for="topic in availableTopics.filter(t => t.category === 'dynamic')"
               :key="topic.value"
               type="button"
-              @click="toggleTopic(topic.value)"
+              @click="form.topic = topic.value"
               :class="[
                 'p-3 rounded-lg border transition-all text-sm text-left relative',
-                form.topics.includes(topic.value)
+                form.topic === topic.value
                   ? 'border-hakkast-purple bg-hakkast-purple/10 text-hakkast-purple'
                   : 'border-gray-200 hover:border-gray-300'
               ]"
@@ -147,8 +124,7 @@
             class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-hakkast-purple focus:border-transparent"
           >
             <option value="hakka">純客語</option>
-            <option value="mixed">客華混合</option>
-            <option value="bilingual">雙語模式</option>
+            <option value="bilingual">客華雙語</option>
           </select>
         </div>
         <div>
@@ -216,30 +192,18 @@
 
           <!-- Additional Options -->
           <div class="space-y-3">
-            <label class="flex items-center">
-              <input
-                v-model="form.preferences.includeTranscript"
-                type="checkbox"
-                class="rounded border-gray-300 text-hakkast-purple focus:ring-hakkast-purple"
-              />
-              <span class="ml-2 text-sm text-gray-700">包含完整文字稿</span>
-            </label>
-            <label class="flex items-center">
-              <input
-                v-model="form.preferences.includeRomanization"
-                type="checkbox"
-                class="rounded border-gray-300 text-hakkast-purple focus:ring-hakkast-purple"
-              />
-              <span class="ml-2 text-sm text-gray-700">包含羅馬拼音</span>
-            </label>
-            <label class="flex items-center">
-              <input
-                v-model="form.preferences.notificationEmail"
-                type="checkbox"
-                class="rounded border-gray-300 text-hakkast-purple focus:ring-hakkast-purple"
-              />
-              <span class="ml-2 text-sm text-gray-700">接收郵件通知</span>
-            </label>
+            <Checkbox 
+              v-model="form.preferences.includeTranscript"
+              label="包含完整文字稿"
+            />
+            <Checkbox 
+              v-model="form.preferences.includeRomanization"
+              label="包含羅馬拼音"
+            />
+            <Checkbox 
+              v-model="form.preferences.notificationEmail"
+              label="接收郵件通知"
+            />
           </div>
         </div>
       </div>
@@ -280,6 +244,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import Checkbox from './Checkbox.vue'
 import type { SubscriptionRequest } from '../types/subscription'
 
 interface Props {
@@ -293,7 +258,7 @@ const isLoading = ref(false)
 const form = ref<SubscriptionRequest>({
   email: '',
   frequency: 'daily',
-  topics: [],
+  topic: '', // Changed from topics to topic
   language: 'hakka',
   tone: 'casual',
   preferences: {
@@ -306,43 +271,19 @@ const form = ref<SubscriptionRequest>({
   }
 })
 
-const availableTopics = [
-  // Traditional Hakka topics
-  { value: 'culture', label: '客家文化', emoji: '🏮', category: 'traditional' },
-  { value: 'history', label: '歷史故事', emoji: '📚', category: 'traditional' },
-  { value: 'food', label: '客家美食', emoji: '🍜', category: 'traditional' },
-  { value: 'music', label: '客家音樂', emoji: '🎵', category: 'traditional' },
-  { value: 'language', label: '語言學習', emoji: '📖', category: 'traditional' },
-  { value: 'festival', label: '節慶習俗', emoji: '🎊', category: 'traditional' },
-  { value: 'nature', label: '自然環境', emoji: '🌿', category: 'traditional' },
-  
-  // Dynamic content topics (with web crawling)
-  { value: 'gaming_news', label: '遊戲最新消息', emoji: '🎮', category: 'dynamic', badge: '最新' },
-  { value: 'research_deep_learning', label: '深度學習研究', emoji: '🧠', category: 'dynamic', badge: '研究' },
-  { value: 'technology_news', label: '科技新聞', emoji: '💻', category: 'dynamic', badge: '最新' },
-  { value: 'health_wellness', label: '健康與養生', emoji: '💚', category: 'dynamic', badge: '最新' },
-  { value: 'climate_environment', label: '氣候環境', emoji: '🌍', category: 'dynamic', badge: '最新' },
-  { value: 'finance_economics', label: '財經動態', emoji: '💰', category: 'dynamic', badge: '最新' }
-]
+import { mockTopicConfigs } from '../mock/mockData'
+
+const availableTopics = mockTopicConfigs
 
 const weekDays = ['日', '一', '二', '三', '四', '五', '六']
 
 const isFormValid = computed(() => {
   return form.value.email && 
-         form.value.topics.length > 0 && 
+         form.value.topic && 
          form.value.frequency &&
          form.value.language &&
          form.value.tone
 })
-
-const toggleTopic = (topic: string) => {
-  const index = form.value.topics.indexOf(topic)
-  if (index > -1) {
-    form.value.topics.splice(index, 1)
-  } else {
-    form.value.topics.push(topic)
-  }
-}
 
 const toggleDeliveryDay = (day: number) => {
   if (!form.value.preferences.deliveryDays) {

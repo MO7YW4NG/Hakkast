@@ -21,7 +21,7 @@ export class SubscriptionService {
       body: JSON.stringify({
         email: subscriptionData.email,
         frequency: subscriptionData.frequency,
-        topics: subscriptionData.topics,
+        topic: subscriptionData.topic,
         language: subscriptionData.language,
         tone: subscriptionData.tone,
         preferences: {
@@ -74,7 +74,7 @@ export class SubscriptionService {
       },
       body: JSON.stringify({
         frequency: updateData.frequency,
-        topics: updateData.topics,
+        topic: updateData.topic,
         language: updateData.language,
         tone: updateData.tone,
         preferences: updateData.preferences ? {
@@ -133,7 +133,7 @@ export class SubscriptionService {
       id: apiData.id,
       email: apiData.email,
       frequency: apiData.frequency,
-      topics: apiData.topics,
+      topic: apiData.topic,
       language: apiData.language,
       tone: apiData.tone,
       isActive: apiData.is_active,

@@ -66,37 +66,45 @@
       </div>
       
       <!-- Podcast Grid -->
-      <motion.div :initial="{ opacity: 0, y: 40 }" :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.7 }" v-if="filteredPodcasts.length > 0" class="space-y-8">
+      <motion.div :initial="{ opacity: 0, y: 40 }" :animate="{ opacity: 1, y: 0 }" :transition="{ duration: 0.5 }" v-if="filteredPodcasts.length > 0" class="space-y-8">
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-2">
           <div class="text-gray-500 text-sm">共 {{ filteredPodcasts.length }} 筆</div>
           <div class="flex gap-2">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" v-model="selectAll" @change="toggleSelectAll" />
-              <span>全選</span>
-            </label>
+            <Checkbox v-model="selectAll" @update:modelValue="toggleSelectAll" label="全選" class="select-all" />
           </div>
         </div>
         <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <div v-for="podcast in filteredPodcasts" :key="podcast.id" class="group relative">
-            <div class="card p-6 group-hover:scale-105 transition-all duration-300">
-              <div class="absolute top-4 left-4">
-                <input type="checkbox" :value="podcast.id" v-model="selectedIds" />
-              </div>
+            <div class="card p-6 h-[18rem] flex flex-col overflow-hidden relative transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5">
               <!-- Header -->
-              <div class="flex items-start justify-between mb-4">
+              <div class="flex items-start justify-between mb-4 flex-shrink-0">
                 <div class="flex-1">
-                  <h3 class="text-lg font-semibold text-hakkast-navy line-clamp-2 mb-2">
-                    {{ podcast.title }}
-                  </h3>
+                  <div class="flex items-start gap-3">
+                    <Checkbox 
+                      :model-value="selectedIds.includes(podcast.id)"
+                      @update:model-value="(checked) => {
+                        if (checked) {
+                          selectedIds.push(podcast.id)
+                        } else {
+                          const index = selectedIds.indexOf(podcast.id)
+                          if (index > -1) selectedIds.splice(index, 1)
+                        }
+                      }"
+                      class="card-checkbox mt-1"
+                    />
+                    <h3 class="text-lg font-semibold text-hakkast-navy line-clamp-2 break-words min-h-[3.5rem] mb-2 flex-1">
+                      {{ podcast.title }}
+                    </h3>
+                  </div>
                   <div class="flex items-center space-x-2 text-sm text-gray-500 mb-1">
                     <span>{{ formatDate(podcast.createdAt) }}</span>
                     <span>•</span>
                     <span class="capitalize">{{ getToneLabel(podcast.tone) }}</span>
                   </div>
                   <div class="flex flex-wrap gap-1 mt-1">
-                    <span class="px-2 py-0.5 rounded bg-hakkast-gold/10 text-hakkast-gold text-xs">{{ podcast.topic }}</span>
-                    <span class="px-2 py-0.5 rounded bg-hakkast-purple/10 text-hakkast-purple text-xs">{{ getLanguageLabel(podcast.language) }}</span>
-                    <span v-if="podcast.audioUrl" class="px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs">可播放</span>
+                    <span class="px-2 py-0.5 rounded bg-hakkast-gold text-hakkast-navy text-xs font-semibold">{{ getTopicLabel(podcast.topic) }}</span>
+                    <span class="px-2 py-0.5 rounded bg-primary-600 text-white text-xs font-semibold">{{ getLanguageLabel(podcast.language) }}</span>
+                    <span v-if="podcast.audioUrl" class="px-2 py-0.5 rounded bg-green-600/10 text-green-700 text-xs font-semibold">可播放</span>
                   </div>
                 </div>
                 <div class="ml-3 flex-shrink-0">
@@ -106,14 +114,14 @@
                 </div>
               </div>
               <!-- Meta Info -->
-              <div class="space-y-3 mb-6">
+              <div class="space-y-3 mb-6 flex-shrink-0">
                 <div class="flex items-center justify-between text-sm">
                   <span class="text-gray-600">時長</span>
                   <span class="text-hakkast-purple font-medium">{{ podcast.duration }}分鐘</span>
                 </div>
               </div>
               <!-- Actions -->
-              <div class="flex space-x-3">
+              <div class="flex space-x-3 mt-auto flex-shrink-0">
                 <button @click="playPodcast(podcast)" class="btn btn-primary flex-1 text-sm"><span class="mr-2">▶️</span>播放</button>
                 <button @click="deletePodcast(podcast.id)" class="btn btn-secondary text-sm px-4" title="刪除播客"><span>🗑️</span></button>
                 <button class="btn btn-ghost text-sm px-4" title="分享播客" @click="showToast('分享功能尚未實作')"><span>📤</span></button>
@@ -124,11 +132,18 @@
       </motion.div>
     </div>
     <!-- Enhanced Podcast Player Modal -->
-    <motion.div v-if="selectedPodcast" :initial="{ opacity: 0 }" :animate="{ opacity: 1 }" :exit="{ opacity: 0 }" :transition="{ duration: 0.4 }" class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div class="max-w-5xl w-full max-h-[90vh] overflow-y-auto">
+    <div 
+      v-if="selectedPodcast" 
+      class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+      @click="closePlayer"
+    >
+      <div 
+        class="max-w-5xl w-full max-h-[90vh] overflow-y-auto"
+        @click.stop
+      >
         <PodcastPlayer :podcast="selectedPodcast" @close="closePlayer" />
       </div>
-    </motion.div>
+    </div>
     <!-- Toast -->
     <transition name="fade">
       <div v-if="toastMessage" class="fixed bottom-8 right-8 bg-hakkast-purple text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2">
@@ -140,13 +155,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { usePodcastStore } from '../stores/podcast'
+import { computed, ref, onMounted } from 'vue'
+import { useMockPodcastStore } from '../stores/mockPodcastStore'
 import PodcastPlayer from '../components/PodcastPlayer.vue'
+import Checkbox from '../components/Checkbox.vue'
 import { motion } from 'motion-v'
 import type { Podcast } from '../types/podcast'
 
-const podcastStore = usePodcastStore()
+const podcastStore = useMockPodcastStore()
 
 const podcasts = computed(() => podcastStore.podcasts)
 const selectedPodcast = ref<Podcast | null>(null)
@@ -167,8 +183,7 @@ const filterOptions = [
 const languageOptions = [
   { value: 'all', label: '全部語言' },
   { value: 'hakka', label: '純客語' },
-  { value: 'mixed', label: '客華混合' },
-  { value: 'bilingual', label: '雙語' }
+  { value: 'bilingual', label: '客華雙語' }
 ]
 
 const filteredPodcasts = computed(() => {
@@ -242,11 +257,19 @@ const getToneEmoji = (tone: string) => {
   return emojis[tone as keyof typeof emojis] || '🎙️'
 }
 
+const getTopicLabel = (topic: string) => {
+  const labels = {
+    'research_deep_learning': '深度學習研究',
+    'technology_news': '科技新聞',
+    'finance_economics': '財經動態'
+  }
+  return labels[topic as keyof typeof labels] || topic
+}
+
 const getLanguageLabel = (language: string) => {
   const labels = {
     'hakka': '純客語',
-    'mixed': '客華混合',
-    'bilingual': '雙語'
+    'bilingual': '客華雙語'
   }
   return labels[language as keyof typeof labels] || language
 }
@@ -268,4 +291,14 @@ const deletePodcast = async (id: string) => {
     showToast('已刪除')
   }
 }
+
+// 組件掛載時加載播客數據
+onMounted(async () => {
+  try {
+    await podcastStore.fetchPodcasts()
+  } catch (error) {
+    console.error('Failed to fetch podcasts:', error)
+    showToast('加載播客數據失敗')
+  }
+})
 </script>

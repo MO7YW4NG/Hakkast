@@ -87,6 +87,11 @@
     @apply bg-white bg-opacity-20 backdrop-blur-lg border border-white border-opacity-20;
   }
   
+  /* Screen reader only - for accessibility */
+  .sr-only {
+    @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+  }
+  
   /* Loading animations */
   .loading-dots::after {
     content: '';

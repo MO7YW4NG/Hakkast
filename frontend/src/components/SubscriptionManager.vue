@@ -49,7 +49,7 @@
               
               <div class="space-y-2">
                 <div class="flex items-center space-x-4 text-sm text-gray-600">
-                  <span><span class="font-medium">主題：</span>{{ getTopicLabels(subscription.topics) }}</span>
+                  <span><span class="font-medium">主題：</span>{{ getTopicLabel(subscription.topic) }}</span>
                   <span><span class="font-medium">語言：</span>{{ getLanguageLabel(subscription.language) }}</span>
                   <span><span class="font-medium">風格：</span>{{ getToneLabel(subscription.tone) }}</span>
                 </div>
@@ -134,9 +134,13 @@
       v-if="showSubscriptionForm"
       v-motion="{ initial: { opacity: 0, scale: 0.95 }, enter: { opacity: 1, scale: 1 }, leave: { opacity: 0, scale: 0.95 } }"
       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      @click="closeSubscriptionForm"
     >
-      <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <div 
+        class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        @click.stop
+      >
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between z-10">
           <h2 class="text-xl font-semibold">{{ editingSubscription ? '編輯訂閱' : '新增訂閱' }}</h2>
           <button
             @click="closeSubscriptionForm"
@@ -169,8 +173,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import SubscriptionForm from './SubscriptionForm.vue'
-import { subscriptionService } from '../services/subscriptionService'
+import { useMockSubscriptionStore } from '../stores/mockSubscriptionStore'
 import type { Subscription, SubscriptionRequest } from '../types/subscription'
+
+const subscriptionStore = useMockSubscriptionStore()
 
 const subscriptions = ref<Subscription[]>([])
 const showSubscriptionForm = ref(false)
@@ -189,17 +195,15 @@ const availableTopics = [
   { value: 'technology', label: '科技創新' }
 ]
 
-const getTopicLabels = (topics: string[]) => {
-  return topics
-    .map(topic => availableTopics.find(t => t.value === topic)?.label || topic)
-    .join('、')
+const getTopicLabel = (topicValue: string) => {
+  const topic = availableTopics.find(t => t.value === topicValue)
+  return topic ? topic.label : topicValue
 }
 
 const getLanguageLabel = (language: string) => {
   const labels = {
     'hakka': '純客語',
-    'mixed': '客華混合',
-    'bilingual': '雙語模式'
+    'bilingual': '客華雙語'
   }
   return labels[language as keyof typeof labels] || language
 }
@@ -245,7 +249,7 @@ const showToast = (message: string) => {
 
 const toggleSubscription = async (subscription: Subscription) => {
   try {
-    const updatedSubscription = await subscriptionService.toggleSubscription(subscription.id)
+    const updatedSubscription = await subscriptionStore.toggleSubscription(subscription.id)
     const index = subscriptions.value.findIndex(s => s.id === subscription.id)
     if (index > -1) {
       subscriptions.value[index] = updatedSubscription
@@ -265,7 +269,7 @@ const editSubscription = (subscription: Subscription) => {
 const deleteSubscription = async (subscription: Subscription) => {
   if (confirm('確定要取消此訂閱嗎？')) {
     try {
-      await subscriptionService.deleteSubscription(subscription.id)
+      await subscriptionStore.deleteSubscription(subscription.id)
       const index = subscriptions.value.findIndex(s => s.id === subscription.id)
       if (index > -1) {
         subscriptions.value.splice(index, 1)
@@ -282,7 +286,7 @@ const handleSubscriptionSubmit = async (subscriptionData: SubscriptionRequest) =
   try {
     if (editingSubscription.value) {
       // Update existing subscription
-      const updatedSubscription = await subscriptionService.updateSubscription(
+      const updatedSubscription = await subscriptionStore.updateSubscription(
         editingSubscription.value.id, 
         subscriptionData
       )
@@ -293,7 +297,7 @@ const handleSubscriptionSubmit = async (subscriptionData: SubscriptionRequest) =
       showToast('訂閱設定已更新')
     } else {
       // Create new subscription
-      const newSubscription = await subscriptionService.createSubscription(subscriptionData)
+      const newSubscription = await subscriptionStore.createSubscription(subscriptionData)
       subscriptions.value.push(newSubscription)
       showToast('訂閱已成功建立')
     }
@@ -310,15 +314,10 @@ const closeSubscriptionForm = () => {
 }
 
 onMounted(async () => {
-  // In a real implementation, you would get the user's email from authentication
-  // For now, we'll load all subscriptions or use a demo email
   try {
-    // You could implement user authentication and get email from there
-    // const userEmail = await getCurrentUserEmail()
-    // subscriptions.value = await subscriptionService.getSubscriptionsByEmail(userEmail)
-    
-    // For demo purposes, start with empty subscriptions
-    subscriptions.value = []
+    // 使用mock store加載訂閱數據
+    await subscriptionStore.fetchSubscriptions()
+    subscriptions.value = subscriptionStore.subscriptions
   } catch (error) {
     console.error('Failed to load subscriptions:', error)
     subscriptions.value = []

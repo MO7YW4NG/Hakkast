@@ -7,7 +7,7 @@ export interface Podcast {
   topic: string
   tone: 'casual' | 'educational' | 'storytelling' | 'interview'
   duration: number
-  language: 'hakka' | 'mixed' | 'bilingual'
+  language: 'hakka' | 'bilingual'
   interests?: string
   createdAt: string
   audioUrl?: string
@@ -18,6 +18,6 @@ export interface PodcastGenerationRequest {
   topic: string
   tone: 'casual' | 'educational' | 'storytelling' | 'interview'
   duration: number
-  language: 'hakka' | 'mixed' | 'bilingual'
+  language: 'hakka' | 'bilingual'
   interests?: string
 }

@@ -2,8 +2,8 @@ export interface Subscription {
   id: string
   email: string
   frequency: 'daily' | 'weekly'
-  topics: string[]
-  language: 'hakka' | 'mixed' | 'bilingual'
+  topic: string
+  language: 'hakka' | 'bilingual'
   tone: 'casual' | 'educational' | 'storytelling' | 'interview'
   isActive: boolean
   createdAt: string
@@ -23,8 +23,8 @@ export interface SubscriptionPreferences {
 export interface SubscriptionRequest {
   email: string
   frequency: 'daily' | 'weekly'
-  topics: string[]
-  language: 'hakka' | 'mixed' | 'bilingual'
+  topic: string
+  language: 'hakka' | 'bilingual'
   tone: 'casual' | 'educational' | 'storytelling' | 'interview'
   preferences: SubscriptionPreferences
 }

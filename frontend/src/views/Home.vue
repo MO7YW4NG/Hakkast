@@ -78,9 +78,30 @@
                   </div>
                 </div>
                 
-                <div class="flex space-x-2">
-                  <button class="btn btn-gold btn-sm">播放</button>
-                  <button class="btn btn-ghost btn-sm">下載</button>
+                <div class="flex items-center justify-center space-x-4">
+                  <!-- Previous/Previous Track Button -->
+                  <button class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="11,12 18,6 18,18" />
+                      <rect x="6" y="6" width="2" height="12" />
+                    </svg>
+                  </button>
+                  
+                  <!-- Play Button (larger and more prominent) -->
+                  <button class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                    <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="8,5 19,12 8,19" />
+                    </svg>
+                  </button>
+                  
+                  <!-- Next/Next Track Button -->
+                  <button class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                    <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <polygon points="6,6 13,12 6,18" />
+                      <rect x="16" y="6" width="2" height="12" />
+                    </svg>
+
+                  </button>
                 </div>
               </motion.div>
               
@@ -165,7 +186,7 @@
               </div>
               <h3 class="text-xl font-semibold text-hakkast-navy mb-3">多語言支援</h3>
               <p class="text-gray-600 mb-4">
-                支援純客語、客華混合、雙語模式，滿足不同使用者需求
+                支援純客語、客華雙語，滿足不同使用者需求
               </p>
               <div class="space-y-2">
                 <div class="flex items-center justify-between text-sm">

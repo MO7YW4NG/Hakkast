@@ -1,5 +1,5 @@
 <template>
-  <div v-if="podcast" v-motion="{ initial: { opacity: 0, y: 40 }, enter: { opacity: 1, y: 0 }, leave: { opacity: 0, y: 40 } }" class="card max-w-5xl mx-auto overflow-hidden">
+  <div v-if="podcast" class="card max-w-5xl mx-auto overflow-hidden">
     <!-- Header -->
     <div class="card-gradient p-8 text-white">
       <div class="flex items-start justify-between">
@@ -127,7 +127,7 @@
     <!-- Footer Actions -->
     <div class="bg-gray-50 px-8 py-6 flex justify-between items-center">
       <div class="text-sm text-gray-500">
-        <span class="font-medium">主題：</span>{{ podcast.topic }}
+        <span class="font-medium">主題：</span>{{ getTopicLabel(podcast.topic) }}
         <span class="mx-2">•</span>
         <span class="font-medium">語言：</span>{{ getLanguageLabel(podcast.language) }}
       </div>
@@ -234,11 +234,20 @@ const getToneLabel = (tone: string) => {
 const getLanguageLabel = (language: string) => {
   const labels = {
     'hakka': '純客語',
-    'mixed': '客華混合',
-    'bilingual': '雙語模式'
+    'bilingual': '客華雙語'
   }
   return labels[language as keyof typeof labels] || language
 }
+
+const getTopicLabel = (topic: string) => {
+  const labels = {
+    'research_deep_learning': '深度學習研究',
+    'technology_news': '科技新聞',
+    'finance_economics': '財經動態'
+  }
+  return labels[topic as keyof typeof labels] || topic
+}
+
 
 onMounted(() => {
   // Add keyboard event listener for ESC key
