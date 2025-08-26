@@ -154,28 +154,8 @@ export class MockPodcastService {
 
   // Private method: Generate title
   private generateTitle(topic: string, _tone: string): string {
-    const topicTitles = {
-      research_deep_learning: [
-        '深度學習在醫療影像診斷中的突破性應用',
-        '人工智慧在教育領域的創新應用',
-        '機器學習算法優化的最新進展',
-        '神經網絡在自然語言處理中的應用'
-      ],
-      technology_news: [
-        '量子計算：未來科技的新前沿',
-        '區塊鏈技術在供應鏈管理中的應用',
-        '5G技術推動智慧城市發展',
-        '物聯網設備的安全挑戰與解決方案'
-      ],
-      finance_economics: [
-        '永續投資：ESG理念如何改變金融市場',
-        '數位貨幣對傳統銀行的衝擊',
-        '綠色金融：氣候變遷下的投資機會',
-        '人工智慧在風險管理中的應用'
-      ]
-    }
-    
-    const titles = topicTitles[topic as keyof typeof topicTitles] || ['新播客內容']
+
+    const titles = ['AI科學家時代：探索智慧的邊界']
     return titles[Math.floor(Math.random() * titles.length)]
   }
 

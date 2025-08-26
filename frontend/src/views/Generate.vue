@@ -188,7 +188,7 @@
               </button>
             </div>
             <!-- Tabs -->
-            <div class="mt-6">
+            <!-- <div class="mt-6">
               <div class="flex space-x-4 border-b border-gray-200 mb-4">
                 <button
                   v-for="tab in contentTabs"
@@ -203,8 +203,8 @@
                 >
                   <span class="mr-2">{{ tab.emoji }}</span>{{ tab.label }}
                 </button>
-              </div>
-              <div class="p-2">
+              </div> -->
+              <!-- <div class="p-2">
                 <div v-if="activeTab === 'hakka'" class="prose max-w-none">
                   <div class="whitespace-pre-wrap text-gray-700 leading-relaxed">{{ generatedPodcast?.hakkaContent }}</div>
                 </div>
@@ -214,8 +214,8 @@
                 <div v-if="activeTab === 'romanization' && generatedPodcast?.romanization" class="prose max-w-none">
                   <div class="whitespace-pre-wrap text-gray-700 font-mono leading-relaxed">{{ generatedPodcast?.romanization }}</div>
                 </div>
-              </div>
-            </div>
+              </div> -->
+            <!-- </div> -->
           </div>
           <div v-else class="flex flex-col items-center justify-center h-full min-h-[400px]">
             <div class="w-24 h-24 bg-hakkast-gradient rounded-2xl flex items-center justify-center mb-6 shadow-xl">
@@ -298,7 +298,7 @@ const hotTopics = mockTopicConfigs.map(topic => topic.label)
 const form = reactive({
   topic: '',
   tone: 'casual',
-  duration: 5,
+  duration: 10,
   language: 'hakka',
   interests: [] as string[],
 })
@@ -452,7 +452,7 @@ const generatePodcast = async () => {
     // Complete all steps
     processSteps.value.forEach(step => step.completed = true)
     
-    showToast('播客生成成功！')
+    showToast('Podcast生成成功！')
     
   } catch (error) {
     console.error('Failed to generate podcast:', error)

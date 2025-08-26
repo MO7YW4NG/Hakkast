@@ -22,9 +22,15 @@
       </div>
 
       <!-- Search & Filter Bar -->
-      <div class="flex flex-col md:flex-row md:items-center gap-4 mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:flex-wrap gap-4 mb-8">
         <input v-model="searchQuery" type="text" placeholder="搜尋標題、主題、內容..." class="input max-w-md" />
-        <div class="flex flex-wrap gap-2">
+        <div class="flex-1"></div>
+        <div v-if="selectedIds.length > 0" class="flex gap-2">
+          <button class="btn btn-gold" @click="batchDelete"><span class="mr-2">🗑️</span>批次刪除</button>
+          <button class="btn btn-ghost" @click="showToast('批次分享功能尚未實作')"><span class="mr-2">📤</span>批次分享</button>
+          <button class="btn btn-ghost" @click="showToast('批次下載功能尚未實作')"><span class="mr-2">⬇️</span>批次下載</button>
+        </div>
+        <div class="flex flex-wrap gap-2 ">
           <button v-for="filter in filterOptions" :key="filter.value" @click="currentFilter = filter.value" :class="[
             'px-4 py-2 rounded-xl font-medium transition-all',
             currentFilter === filter.value ? 'bg-hakkast-gradient text-white shadow-lg' : 'bg-white text-hakkast-navy border border-gray-200 hover:border-hakkast-purple'
@@ -37,12 +43,6 @@
           ]">
             <span class="mr-2">🌐</span>{{ lang.label }}
           </button>
-        </div>
-        <div class="flex-1"></div>
-        <div v-if="selectedIds.length > 0" class="flex gap-2">
-          <button class="btn btn-gold" @click="batchDelete"><span class="mr-2">🗑️</span>批次刪除</button>
-          <button class="btn btn-ghost" @click="showToast('批次分享功能尚未實作')"><span class="mr-2">📤</span>批次分享</button>
-          <button class="btn btn-ghost" @click="showToast('批次下載功能尚未實作')"><span class="mr-2">⬇️</span>批次下載</button>
         </div>
       </div>
 
@@ -80,18 +80,9 @@
               <div class="flex items-start justify-between mb-4 flex-shrink-0">
                 <div class="flex-1">
                   <div class="flex items-start gap-3">
-                    <Checkbox 
-                      :model-value="selectedIds.includes(podcast.id)"
-                      @update:model-value="(checked) => {
-                        if (checked) {
-                          selectedIds.push(podcast.id)
-                        } else {
-                          const index = selectedIds.indexOf(podcast.id)
-                          if (index > -1) selectedIds.splice(index, 1)
-                        }
-                      }"
-                      class="card-checkbox mt-1"
-                    />
+                    <div class="w-12 h-12 bg-hakkast-gradient rounded-xl flex items-center justify-center shadow-lg">
+                      <span class="text-white text-lg">{{ getToneEmoji(podcast.tone) }}</span>
+                    </div>
                     <h3 class="text-lg font-semibold text-hakkast-navy line-clamp-2 break-words min-h-[3.5rem] mb-2 flex-1">
                       {{ podcast.title }}
                     </h3>
@@ -108,9 +99,18 @@
                   </div>
                 </div>
                 <div class="ml-3 flex-shrink-0">
-                  <div class="w-12 h-12 bg-hakkast-gradient rounded-xl flex items-center justify-center shadow-lg">
-                    <span class="text-white text-lg">{{ getToneEmoji(podcast.tone) }}</span>
-                  </div>
+                  <Checkbox 
+                    :model-value="selectedIds.includes(podcast.id)"
+                    @update:model-value="(checked) => {
+                      if (checked) {
+                        selectedIds.push(podcast.id)
+                      } else {
+                        const index = selectedIds.indexOf(podcast.id)
+                        if (index > -1) selectedIds.splice(index, 1)
+                      }
+                    }"
+                    class="card-checkbox mt-1"
+                  />
                 </div>
               </div>
               <!-- Meta Info -->
