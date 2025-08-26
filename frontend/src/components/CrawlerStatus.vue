@@ -59,7 +59,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 
 interface CrawlerStats {
   totalTopics: number
@@ -106,18 +106,18 @@ const getTopicLabel = (topic: string) => {
   return topicLabels[topic] || topic.replace('_', ' ')
 }
 
-const fetchCrawlerStats = async () => {
-  try {
-    const response = await fetch('/api/crawler/stats')
-    if (response.ok) {
-      crawlerInfo.value = await response.json()
-    }
-  } catch (error) {
-    console.error('Failed to fetch crawler stats:', error)
-  }
-}
+// const fetchCrawlerStats = async () => {
+//   try {
+//     const response = await fetch('/api/crawler/stats')
+//     if (response.ok) {
+//       crawlerInfo.value = await response.json()
+//     }
+//   } catch (error) {
+//     console.error('Failed to fetch crawler stats:', error)
+//   }
+// }
 
-onMounted(() => {
-  fetchCrawlerStats()
-})
+// onMounted(() => {
+//   fetchCrawlerStats()
+// })
 </script>

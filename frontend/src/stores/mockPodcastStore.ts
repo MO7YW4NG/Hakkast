@@ -22,17 +22,17 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     ]
   })
 
-  // 生成播客
+  // Generate podcast
   const generatePodcast = async (request: PodcastGenerationRequest) => {
     isLoading.value = true
     error.value = null
     
     try {
-      // 模拟生成过程
+      // Simulate generation process
       generationStatus.value.isGenerating = true
       generationStatus.value.progress = 0
       
-      // 模拟进度更新
+      // Simulate progress updates
       const progressInterval = setInterval(() => {
         if (generationStatus.value.progress < 100) {
           generationStatus.value.progress += Math.random() * 20
@@ -40,7 +40,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
             generationStatus.value.progress = 100
           }
           
-          // 更新当前步骤
+          // Update current step
           const stepIndex = Math.floor(generationStatus.value.progress / 16.67)
           if (stepIndex < generationStatus.value.steps.length) {
             generationStatus.value.currentStep = generationStatus.value.steps[stepIndex]
@@ -48,16 +48,16 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
         }
       }, 500)
       
-      // 调用mock service生成播客
+      // Call mock service to generate podcast
       const podcast = await mockPodcastService.generatePodcast(request)
       
-      // 清除进度更新
+      // Clear progress updater
       clearInterval(progressInterval)
       generationStatus.value.isGenerating = false
       generationStatus.value.progress = 100
       generationStatus.value.currentStep = '完成'
       
-      // 添加到播客列表
+      // Add to podcast list
       podcasts.value.unshift(podcast)
       
       return podcast
@@ -70,7 +70,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 获取所有播客
+  // Fetch all podcasts
   const fetchPodcasts = async () => {
     isLoading.value = true
     error.value = null
@@ -86,7 +86,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 根据ID获取播客
+  // Get podcast by ID
   const getPodcast = async (id: string) => {
     try {
       return await mockPodcastService.getPodcast(id)
@@ -96,7 +96,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 删除播客
+  // Delete podcast
   const deletePodcast = async (id: string) => {
     try {
       await mockPodcastService.deletePodcast(id)
@@ -107,7 +107,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 搜索播客
+  // Search podcasts
   const searchPodcasts = async (query: string) => {
     try {
       return await mockPodcastService.searchPodcasts(query)
@@ -117,7 +117,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 根据主题筛选播客
+  // Filter podcasts by topic
   const getPodcastsByTopic = async (topic: string) => {
     try {
       return await mockPodcastService.getPodcastsByTopic(topic)
@@ -127,7 +127,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 获取生成状态
+  // Fetch generation status
   const getGenerationStatus = async () => {
     try {
       const status = await mockPodcastService.getGenerationStatus()
@@ -139,7 +139,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 获取生成历史
+  // Fetch generation history
   const getGenerationHistory = async () => {
     try {
       return await mockPodcastService.getGenerationHistory()
@@ -149,7 +149,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 获取统计数据
+  // Fetch statistics
   const getStats = async () => {
     try {
       return await mockPodcastService.getStats()
@@ -159,7 +159,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 获取热门话题
+  // Fetch trending topics
   const getTrendingTopics = async () => {
     try {
       return await mockPodcastService.getTrendingTopics()
@@ -169,7 +169,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 获取搜索建议
+  // Fetch search suggestions
   const getSearchSuggestions = async (query: string) => {
     try {
       return await mockPodcastService.getSearchSuggestions(query)
@@ -179,7 +179,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 获取用户反馈
+  // Fetch user feedback
   const getUserFeedback = async () => {
     try {
       return await mockPodcastService.getUserFeedback()
@@ -189,7 +189,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 添加用户反馈
+  // Add user feedback
   const addUserFeedback = async (podcastId: string, rating: number, comment: string) => {
     try {
       await mockPodcastService.addUserFeedback(podcastId, rating, comment)
@@ -199,7 +199,7 @@ export const useMockPodcastStore = defineStore('mockPodcast', () => {
     }
   }
 
-  // 重置生成状态
+  // Reset generation status
   const resetGenerationStatus = () => {
     generationStatus.value = {
       isGenerating: false,

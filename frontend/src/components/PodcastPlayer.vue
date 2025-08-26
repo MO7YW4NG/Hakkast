@@ -74,15 +74,16 @@
                 分享
               </button>
             </div>
-            <div class="flex items-center space-x-3 text-white/60 text-sm">
-              <span>🎵 高品質客語音檔</span>
-            </div>
           </div>
         </div>
       </div>
+      <div class="text-sm text-white/80 mt-4">
+        <span class="font-medium">主題：</span>{{ getTopicLabel(podcast.topic) }}
+        <span class="mx-2">•</span>
+        <span class="font-medium">語言：</span>{{ getLanguageLabel(podcast.language) }}
+      </div>
     </div>
-
-    <!-- Content Tabs -->
+<!-- 
     <div class="bg-white">
       <div class="border-b border-gray-200">
         <nav class="flex space-x-8 px-8">
@@ -124,7 +125,6 @@
       </div>
     </div>
 
-    <!-- Footer Actions -->
     <div class="bg-gray-50 px-8 py-6 flex justify-between items-center">
       <div class="text-sm text-gray-500">
         <span class="font-medium">主題：</span>{{ getTopicLabel(podcast.topic) }}
@@ -144,7 +144,7 @@
           關閉播放器
         </button>
       </div>
-    </div>
+    </div> -->
   </div>
 </template>
 

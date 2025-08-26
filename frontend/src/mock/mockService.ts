@@ -51,7 +51,7 @@ export class MockPodcastService {
       language: request.language,
       interests: request.interests,
       createdAt: new Date().toISOString(),
-      audioUrl: `/static/audio/podcast-${Date.now()}.mp3`,
+      audioUrl: `/sample-podcast.wav`,
       audioDuration: request.duration
     }
     

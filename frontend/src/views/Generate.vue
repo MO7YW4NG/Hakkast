@@ -298,7 +298,7 @@ const hotTopics = mockTopicConfigs.map(topic => topic.label)
 const form = reactive({
   topic: '',
   tone: 'casual',
-  duration: 10,
+  duration: 5,
   language: 'hakka',
   interests: [] as string[],
 })
