@@ -161,17 +161,17 @@ defineEmits<{
   close: []
 }>()
 
-const activeTab = ref('hakka')
+// const activeTab = ref('hakka')
 const audioPlayer = ref<HTMLAudioElement | null>(null)
 const isPlaying = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
 
-const contentTabs = [
-  { id: 'hakka', label: '客語內容', emoji: '🏮' },
-  { id: 'chinese', label: '中文原稿', emoji: '📝' },
-  { id: 'romanization', label: '羅馬拼音', emoji: '🔤' }
-]
+// const contentTabs = [
+//   { id: 'hakka', label: '客語內容', emoji: '🏮' },
+//   { id: 'chinese', label: '中文原稿', emoji: '📝' },
+//   { id: 'romanization', label: '羅馬拼音', emoji: '🔤' }
+// ]
 
 const progressPercentage = computed(() => {
   if (duration.value === 0) return 0

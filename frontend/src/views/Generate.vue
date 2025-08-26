@@ -369,11 +369,11 @@ const toneOptions = [
   }
 ]
 
-const contentTabs = [
-  { id: 'hakka', label: '客語內容', emoji: '🏮' },
-  { id: 'chinese', label: '中文原稿', emoji: '📝' },
-  { id: 'romanization', label: '羅馬拼音', emoji: '🔤' }
-]
+// const contentTabs = [
+//   { id: 'hakka', label: '客語內容', emoji: '🏮' },
+//   { id: 'chinese', label: '中文原稿', emoji: '📝' },
+//   { id: 'romanization', label: '羅馬拼音', emoji: '🔤' }
+// ]
 
 const processSteps = ref([
   {

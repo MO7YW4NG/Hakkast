@@ -153,32 +153,32 @@ export class MockPodcastService {
   }
 
   // Private method: Generate title
-  private generateTitle(topic: string, _tone: string): string {
+  private generateTitle(_topic: string, _tone: string): string {
 
     const titles = ['AI科學家時代：探索智慧的邊界']
     return titles[Math.floor(Math.random() * titles.length)]
   }
 
   // Private method: Generate content
-  private generateContent(topic: string, _tone: string): string {
+  private generateContent(_topic: string, _tone: string): string {
     const baseContent = {
       research_deep_learning: '深度學習技術正在各個領域展現出驚人的潛力。透過先進的算法和大量的數據訓練，AI系統能夠完成以往需要人類專家才能完成的複雜任務。這項技術不僅提高了工作效率，還為科學研究和實際應用開闢了新的可能性。',
       technology_news: '科技產業正在經歷前所未有的變革，新技術層出不窮，為人類社會帶來深遠的影響。從人工智慧到量子計算，從區塊鏈到物聯網，這些創新技術正在重塑我們的生活方式和工作模式。',
       finance_economics: '金融市場和經濟環境正在經歷重大轉型，數位化技術的普及和永續發展理念的興起，正在改變傳統的投資思維和商業模式。投資者越來越關注企業的社會責任和環境影響。'
     }
     
-    return baseContent[topic as keyof typeof baseContent] || '這是一個關於最新科技發展的播客內容。'
+    return baseContent[_topic as keyof typeof baseContent] || '這是一個關於最新科技發展的播客內容。'
   }
 
   // Private method: Generate romanization
-  private generateRomanization(topic: string): string {
+  private generateRomanization(_topic: string): string {
     const romanizations = {
       research_deep_learning: 'tsim1 tshu5 hok8 sip8 ki4 sut8',
       technology_news: 'ki4 sut8 sin5 mun5',
       finance_economics: 'kim5 yung5 king5 ki5'
     }
     
-    return romanizations[topic as keyof typeof romanizations] || 'mo5 kuk5'
+    return romanizations[_topic as keyof typeof romanizations] || 'mo5 kuk5'
   }
 }
 
